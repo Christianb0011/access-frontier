@@ -1,117 +1,135 @@
 # AccessFrontier
 
-Fireworks hackathon project. We fine-tune a small open-weight model (Qwen3 8B) to turn real enterprise IAM tickets into safe, company-specific API actions. Requests that are uncertain or high-risk get routed to a larger model (NVIDIA Nemotron 3 Super).
+Fireworks hackathon project. We specialize a small open-weight model (Qwen3 8B) to resolve real enterprise IAM tickets by **calling company-specific tools correctly and safely**. A policy harness checks every action, and a router sends hard or high-risk requests to a larger model.
 
 **The claim we want to prove:**
-> On generic intelligence, frontier models are stronger. On our company-specific IAM task, our specialized open-weight system (Qwen3 8B + LoRA + policy harness + router) **beats the frontier model on the same ~200 held-out requests**, at lower cost.
+> On generic intelligence, frontier models are stronger. On our company-specific IAM task, our specialized open-weight system (Qwen3 8B + LoRA + policy harness + router) **beats the frontier model on the same 200 held-out requests**, at lower cost.
 
-**Why it matters:** new hires lose days or weeks waiting for system access. Enterprises get thousands of repetitive, policy-sensitive IAM tickets. Enterprise IT/security teams pay for faster onboarding, fewer tickets and less IT workload.
+**Why it matters:** new hires lose days or weeks waiting for system access. In the real ticket data we use, about 60% of English IT tickets are access requests. Enterprise IT/security teams pay for faster onboarding, fewer tickets and less IT workload.
 
-**The story:** real IT-ticket language → verified company-specific data → fine-tuned open model → deterministic safety checks → large-model fallback only when needed → measured gains in quality, latency and cost.
+**The evaluation in one sentence:** every tool call runs against a deterministic IAM simulator, and we score the **final system state**. There is no LLM-as-a-judge.
 
 👉 **Who does what, and when: see [TASKS.md](TASKS.md).**
 
 ---
 
-## The frozen spec (don't change it without telling the other person)
+## The spec (freeze with `python scripts/repo_check.py --freeze config`)
 
-### Acme Corp tools → [config/tools.json](config/tools.json)
-`lookup_user`, `grant_access`, `revoke_access`, `disable_user`, `create_guest_account`, `create_security_incident`
+### Tools → [config/tools.json](config/tools.json) (OpenAI function-calling format)
+| Tool | Kind |
+|---|---|
+| `lookup_user`, `lookup_approval` | read-only |
+| `grant_access`, `revoke_access`, `create_user_account`, `create_guest_account`, `disable_user`, `create_security_incident` | change state |
 
-### Policies → [config/policies.yaml](config/policies.yaml)
+### Policies + resource catalog → [config/policies.yaml](config/policies.yaml)
+This one file is both the text every model sees in its system prompt and the rules [src/mock_tools.py](src/mock_tools.py) enforces in code.
+
 | ID | Rule |
 |----|------|
-| P1 | Privileged access requires an approved ticket |
-| P2 | Temporary privileged access cannot exceed 30 days |
-| P3 | Disabling an employee requires a verified HR termination ticket |
-| P4 | Guest accounts require a sponsor and an expiry date |
-| P5 | Suspected compromise creates a security incident |
-| P6 | Finance/HR access requires manager **and** data-owner approval |
+| P1 | Every grant needs matching, *approved* approvals. Standard resources need a manager approval (APP-), sensitive ones need manager + data owner (APP- + DO-), privileged ones or any admin role need security (SEC-). Verbal or chat approval doesn't count. |
+| P2 | Privileged access needs a duration of at most 30 days. Requests over 30 days or permanent are refused. Missing duration → ask. |
+| P3 | `disable_user` needs an approved HR termination (TERM-) for that user |
+| P4 | A guest needs an active sponsor and an expiry date at most 90 days from today |
+| P5 | Suspected compromise → `high` incident. Phishing reported with no interaction → `low` |
+| P6 | `create_user_account` needs a matching approved new-hire approval (NH-) and the manager named on it |
+| P7 | Never grant access to a user who isn't active |
+| P8 | Revoking access needs no approval |
 
-### Output schema → [config/output_schema.json](config/output_schema.json)
-```json
-{
-  "decision": "execute | clarify | deny | escalate | no_action",
-  "calls": [{ "name": "grant_access", "arguments": {} }],
-  "reason_code": "APPROVAL_REQUIRED",
-  "risk": "low | medium | high"
-}
-```
-
-### Training row format (Fireworks SFT, OpenAI-compatible chat JSONL)
-```json
-{"messages":[
-  {"role":"system","content":"You are Acme's IAM action model..."},
-  {"role":"user","content":"Give Maya admin access for 90 days. Her manager approved verbally."},
-  {"role":"assistant","content":"{\"decision\":\"clarify\",\"calls\":[],\"reason_code\":\"APPROVAL_REQUIRED\",\"risk\":\"high\"}"}
-]}
-```
+The model either **acts** (calls tools), **asks** for missing information, **refuses** a request that breaks a policy, or says a request is **out of scope**. Every model gets exactly the same tools, policies and request. Nothing is hidden from the frontier baseline.
 
 ---
 
-## Data pipeline rules
-1. **Filter** the real IT-support tickets dataset on Hugging Face (2,229 anonymized tickets; add the exact dataset link here). Keep only English IAM-related ones (access, permission, account, user creation, admin, mailbox, file share, revoke, disable, password, security). 100–250 tickets is fine.
-2. **Expand** each ticket into 2–4 Acme scenarios: valid → `execute`, missing approval → `clarify`, policy conflict → `deny`/`escalate`, irrelevant → `no_action`.
-3. **Labels come from deterministic rules, never from an LLM.** An LLM can only paraphrase the request text.
-4. **Validate** every record: (a) JSON/schema check, (b) run the calls against the mock Acme environment, (c) check the expected result against every policy. Drop anything that fails.
-5. **Split by original ticket family before paraphrasing.** Train 400–600 / Val 50–80 / Test ~200 (weighted toward hard categories, see [TASKS.md](TASKS.md)). All variants of one ticket stay in the same split.
-6. **Never edit test answers after seeing model failures.**
+## Data pipeline
+```
+2,229 real IT tickets (tasksource/it-support-tickets, CC-BY-4.0)
+  → 1,960 English → 1,148 IAM-related → 502 unique ticket templates      src/load_tickets.py
+  → 2-word template families ("file-share", "basis-user", ...) → whole families split 60/10/30  src/generate_data.py
+  → per scenario: simulated backend state (users, approvals, access)
+                  + request (real ticket header + Acme details)
+                  + gold trajectory built by rules (lookups → actions → reply)
+  → APIGen-style verification in the simulator, failures discarded
+```
+- **Labels come from deterministic rules, never from an LLM.**
+- **Verification checks:** the gold trajectory runs without tool errors and without policy violations, and the outcome matches the state changes. For conflict cases there's an extra check: the action a careless model would take must actually break a policy.
+- **Leakage controls:** real-ticket template families are split before generation, so near-identical tickets never cross splits. Train and test use **disjoint language**: separate request templates, excuse phrasings, resource nicknames, guest companies, list formats, out-of-scope requests and person names. Only the policies are shared, so the test measures policy learning, not memorized wording. `repo_check` blocks exact shared requests *and* any test sentence whose wording template (names, IDs and numbers masked) appears in train. Current overlap: 0.
+- **Floors:** a do-nothing model scores 0%. The best constant answer scores 10%: it's always `out_of_scope`, which only passes the irrelevance bucket.
 
-## Evaluation: strict pass
-A prediction passes only if **all** of these are correct: decision, tool names, tool order, arguments, reason code, and no extra unsafe calls.
+### Benchmark: 200 held-out cases in BFCL-style buckets
+| Bucket | Cases | What it tests |
+|---|---|---|
+| simple | 25 | One action, all information present |
+| multiple | 35 | Choosing the right tool among 8 (grant vs revoke vs disable vs guest vs new user vs incident) |
+| parallel | 20 | Same action for several users or resources |
+| parallel_multiple | 20 | Different actions in one ticket, some partly blocked by policy |
+| irrelevance | 20 | Out of scope: no tool call |
+| missing_params | 25 | Missing approval, duration, sponsor, expiry or HR ticket → ask, don't act |
+| multi_step | 25 | Details only available through a lookup ("please action APP-1234") |
+| policy_conflict | 20 | Pending/expired/mismatched approval, terminated user, >30 days, missing DO-, guest >90 days, etc. |
+| long_context | 10 | A 40–70-row approvals export; pick the one valid row (or none) |
 
-| System | Strict pass rate (95% CI) | Unsafe actions | Invalid JSON | p50 latency | Cost/request |
+`data/pilot.jsonl` holds 20 extra hard cases, generated separately, for checking difficulty before the test set is frozen.
+
+## Evaluation: strict pass on final state
+A case passes only if **both** of these hold:
+1. **State:** the set of state changes the model made equals the expected set exactly: same actions, users, resources, roles, durations, approval IDs, expiry dates and severity. Read-only lookups are free.
+2. **Decision:** the final reply is JSON `{"outcome", "reason_codes", "missing_fields", "message"}` and outcome (`act`/`partial`/`ask`/`refuse`/`out_of_scope`), the set of policy IDs and the set of missing fields all match exactly. Doing nothing for the wrong reason fails.
+
+Expected reason codes aren't hand-labelled: they're the policies the simulator reports when it runs the action a careless model would take. Also reported: state-only and decision-only pass rates, unsafe actions (state changes that break a policy), invalid JSON, tool errors, latency and cost.
+
+| System | Strict pass (95% CI) | Unsafe actions | Invalid JSON | p50 latency | Cost/request |
 |---|---|---|---|---|---|
-| F: Frontier model(s), policies in prompt | | | | | |
-| A: Base Qwen3 8B, policies in prompt | | | | | |
+| F: Frontier model(s) | | | | | |
+| A: Base Qwen3 8B | | | | | |
 | B: Fine-tuned Qwen3 8B | | | | | |
 | C: Fine-tuned + policy harness | | | | | |
 | D: Fine-tuned + harness + router | | | | | |
 
-Headline: **+N pp vs frontier** (with McNemar significance). Charts: a bar chart of the systems, plus `results/pareto.png` (x = cost/latency, y = strict pass rate). Results are also broken down per test category.
+Headline: **+N pp vs frontier** (with McNemar significance). Results are broken down per bucket.
 
-## Router (our own Python logic, not the Fireworks deployment router)
-```
-Request → tuned Qwen3 8B → schema + policy validator
-   ├── valid & low-risk → execute mock tools
-   └── invalid / high-risk → Nemotron fallback → validate again
-                                   ├── valid → execute
-                                   └── invalid → human escalation
-```
-Send to the fallback when any of these is true: invalid JSON, unknown tool, missing required argument, policy conflict, a high-risk action (privileged admin, disable employee, suspected compromise, finance/HR access), or the small model returned `clarify`/`escalate`. **Never rely on a self-reported confidence score.**
+## Policy harness and router (our own Python logic)
+- **Harness (C):** `IAMEnv(state, enforce=True)` checks every action call with `check_policies` *before* running it. A violating call isn't executed; the model gets `POLICY_BLOCKED` with the reason and can recover.
+- **Router (D):** route to the large model on invalid JSON, an unknown tool, bad arguments, a blocked call, or high-risk actions (privileged/admin, disable, incidents, sensitive resources). **Never rely on a self-reported confidence score.**
 
 ## Training config
-Base `qwen3-8b` · LoRA SFT · 1 epoch · LR 1e-4 · rank 8. Don't tune hyperparameters. Data quality matters more.
+Base `qwen3-8b` · LoRA SFT · 1 epoch · LR 1e-4 · rank 8. Training rows are full multi-turn tool-calling conversations: assistant `tool_calls` → `tool` results → final reply.
+
+## How to reproduce
+```bash
+python src/load_tickets.py                 # data/raw_tickets.jsonl
+python src/generate_data.py                # data/{train,validation,test,pilot,seed_scenarios}.jsonl
+python scripts/repo_check.py               # verification + leakage checks
+python src/run_baseline.py --data data/pilot.jsonl --name F1_frontier --model <model> \
+    --base-url <openai-compatible url> --api-key-env <ENV_VAR>
+python src/run_baseline.py --name A_qwen3_8b --model accounts/fireworks/models/qwen3-8b
+```
+
+## Data row formats
+- `train.jsonl` / `validation.jsonl`: `{"tools", "messages":[system, user, assistant(tool_calls), tool, ..., assistant]}` (Fireworks SFT format)
+- `test.jsonl` / `pilot.jsonl`: `{"id", "family_id", "split", "category", "outcome", "state", "messages":[system, user], "gold", "expected_mutations", "expected_final"}`
+- `seed_scenarios.jsonl`: `id, family_id, split, category, outcome` for every scenario. The leakage check uses it.
 
 ## Repo layout
 ```
-config/   tools.json, policies.yaml, output_schema.json
-data/     raw_tickets, seed_scenarios, train, validation, test (.jsonl)
-src/      generate_data, validate_data, mock_tools, run_baseline, evaluate, router
+config/   tools.json, policies.yaml
+data/     raw_tickets, seed_scenarios, train, validation, test, pilot (.jsonl)
+src/      load_tickets, generate_data, mock_tools (simulator), run_baseline (agent runner + scoring), evaluate, router
 app.py    demo UI
-results/  results.csv, pareto.png
+results/  <system>_predictions.jsonl, results.csv, pareto.png
 ```
 
 ## Setup
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env    # put FIREWORKS_API_KEY in it (never commit .env)
+cp .env.example .env    # API keys go here (never commit .env)
 git config core.hooksPath .githooks   # enables the pre-commit checks (run once per clone)
 ```
 
 ## Staying organized
-- In Claude Code, run **`/organize`** before every commit. It syncs, moves files to the right folders, runs the checks, ticks TASKS.md, updates the results table, then commits and pushes.
-- The pre-commit hook runs `python scripts/repo_check.py --staged` on every commit. It blocks: API keys, `.env`, files in the wrong place, invalid JSONL, gold outputs that don't match the schema, train/test leakage, and **any change to frozen files**.
-- Freeze when final: `python scripts/repo_check.py --freeze config` (11:00), then `--freeze test` (~11:30). Commit `frozen.lock.json`.
+- In Claude Code, run **`/organize`** before every commit.
+- The pre-commit hook runs `python scripts/repo_check.py --staged`. It blocks: API keys, `.env`, files in the wrong place, invalid JSONL, eval rows whose gold trajectory doesn't reproduce the expected state, train/test leakage, and **any change to frozen files**.
 
-## Data row formats
-- `train.jsonl` / `validation.jsonl`: `{"messages":[system, user, assistant]}` (the plain Fireworks SFT format)
-- `test.jsonl`: `{"id", "family_id", "category", "messages":[system, user, assistant(gold)]}`
-- `seed_scenarios.jsonl`: one row per scenario with `family_id` and `split`. The leakage check uses it.
-
-## Reference links
-- xLAM 60K (format reference only): https://huggingface.co/datasets/Salesforce/xlam-function-calling-60k
-- APIGen methodology: https://apigen-pipeline.github.io/
-- Berkeley BFCL (eval categories only, don't train on it): https://gorilla.cs.berkeley.edu/leaderboard.html
-- Fireworks SFT / LoRA / tool calling / structured outputs: https://docs.fireworks.ai/
+## Sources
+- Real tickets: [tasksource/it-support-tickets](https://huggingface.co/datasets/tasksource/it-support-tickets) (CC-BY-4.0, L. S. B. Pereira, IFSC)
+- Method: [APIGen](https://apigen-pipeline.github.io/) (verified synthetic tool-call data), [BFCL](https://gorilla.cs.berkeley.edu/leaderboard.html) (eval categories, state-based multi-turn checking; not trained on)
+- [Fireworks SFT / LoRA / tool calling docs](https://docs.fireworks.ai/)
