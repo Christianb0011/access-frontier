@@ -107,7 +107,7 @@ td.ours,th.ours{{background:#eaf2fc;font-weight:700}} tr.minor th,tr.minor td{{f
 <tr><th><b>test</b> (main)</th><td><b>{n_te}</b></td><td>frozen benchmark</td></tr>
 <tr><th><b>test_hard</b> (stress)</th><td><b>{n_teh}</b></td><td>frozen benchmark</td></tr>
 </table>
-<p class="small">Held-out sets are SHA-locked and de-duplicated against training. A blind model review of 47 hard-weighted cases agreed with the frozen labels on 47/47.</p></div>
+<p class="small">Held-out sets are SHA-locked and de-duplicated against training. 47 hard-weighted cases were checked by a blind model review (47/47 agreed) and then by hand by a team member.</p></div>
 </div>
 <div class="n">Provenance: docs/DATA_PROVENANCE.md</div></div>
 

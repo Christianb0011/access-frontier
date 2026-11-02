@@ -64,5 +64,5 @@ Frozen files are locked by SHA-256 in `frozen.lock.json`. A pre-commit hook bloc
 ## 6. Independent checks
 - **Audit:** [DATASET_AND_EVAL_AUDIT.md](DATASET_AND_EVAL_AUDIT.md).
 - **Nanda's independent data audit:** `nanda-eval/reports/full-frontier-evaluation.md` on the `codex/nanda-eval` branch.
-- **One blind model review of 47 hard-weighted cases:** agreed with the frozen answers on 47/47 cases (actions, outcome, policies, missing fields). See `docs/review/coordinator/AUDIT_FINDINGS.md`.
+- **One blind model review of 47 hard-weighted cases:** agreed with the frozen answers on 47/47 cases (actions, outcome, policies, missing fields). See `docs/review/coordinator/AUDIT_FINDINGS.md`. Each of the 47 cases was then also checked by hand by a team member (Christian Bakhos). That check was not blind.
 - **Known issue in gold answers:** 25 main-test gold traces skip a status lookup. Their expected results are still correct. This is disclosed, and fixed only in training data before fine-tuning.
