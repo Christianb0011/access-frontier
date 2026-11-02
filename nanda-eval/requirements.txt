@@ -1,0 +1,6 @@
+# Tested evaluation environment; separate from the app/training dependency set.
+inspect-ai==0.3.287
+openai==3.42.1
+python-dotenv==1.2.4
+PyYAML==6.0.3
+jsonschema==4.26.0

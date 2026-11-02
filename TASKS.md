@@ -43,10 +43,12 @@ Run a frontier model on `data/pilot.jsonl` (20 hard cases):
 - [ ] Record a backup demo video
 
 ## 👤 Nanda-Kiran: model and system
+- [x] Package Inspect IAM benchmark, hybrid scoring, tests and pilot reports in [nanda-eval/](nanda-eval/README.md).
+- [x] Run Kimi K3 through Inspect on all 325 current evaluation cases and audit unchanged data: [96% standard, 98.1% hard, 100% pilot; findings](nanda-eval/reports/full-frontier-evaluation.md).
 - [ ] Confirm which models are in the event account: `qwen3-8b`, Nemotron 3 Super, and **the strongest frontier model we're allowed to use** (ideally 2)
 - [x] `src/mock_tools.py`: IAM simulator + policy checker + state-based grading (built with the generator)
 - [x] `src/run_baseline.py`: agent runner (any OpenAI-compatible endpoint, temp 0, `--harness` for system C)
-- [ ] ⚡ Run the pilot on the frontier model as soon as the API key is in `.env`
+- [x] ⚡ Run the pilot on the frontier model: Kimi K3, 15/20 strict on the earlier `3ee39a3` snapshot; [input hashes and limitations](nanda-eval/reports/validation.md).
 - [ ] `src/evaluate.py`: merge `results/*_predictions.jsonl` → `results/results.csv` + 95% bootstrap CI + McNemar vs frontier + per-bucket table
 - [ ] Run base Qwen3 8B on test (= system A)
 - [ ] Upload train + validation → **submit the LoRA SFT job by 12:00** (1 epoch, LR 1e-4, rank 8)
