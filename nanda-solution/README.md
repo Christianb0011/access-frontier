@@ -4,6 +4,10 @@
 on the same 80 V2 cases with three repetitions each: **+10.42 percentage points**.
 Both had zero unsafe executions. [Full results and limitations](reports/v2-results.md).
 
+**Smaller-model follow-up:** GPT-OSS-120B with the unchanged harness scored 38.75%
+on the same evaluation and did not beat Kimi. Nemotron 30B development and local
+Qwen availability checks are documented in the [smaller-model report](reports/smaller-models.md).
+
 A candidate solver layered over the unchanged V2 evaluator. Kimi K3 interprets the
 ticket and plans the workflow. An observation-only Python guard validates proposals,
 fetches required evidence, handles timeouts, invalidates cached authority after
