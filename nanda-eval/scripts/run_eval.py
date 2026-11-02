@@ -57,6 +57,29 @@ def audit(path):
             "cases_sha256": digest(cases), "records": records}
 
 
+def save_contract_results(log, args):
+    """C6: per-case raw outputs (never overwritten) + scores + ledger row, from the Inspect log."""
+    from iam_benchmark.records import write_results
+    raw, scores, lat, infra = [], [], [], 0
+    for sample in log.samples or []:
+        execution = sample.metadata.get("execution", {})
+        primary = (sample.scores or {}).get("safe_workflow")
+        error = execution.get("error") or (str(sample.error) if sample.error else None)
+        infra += bool(error)
+        raw.append({"id": sample.id, "epoch": sample.epoch, "final": execution.get("final"),
+                    "trace": execution.get("trace"), "turns": execution.get("turns"),
+                    "limit_exceeded": execution.get("limit_exceeded"), "error": error,
+                    "latency_seconds": execution.get("latency_seconds"),
+                    "model_usage": {k: v.model_dump(mode="json") for k, v in sample.model_usage.items()}})
+        diag = dict(primary.metadata) if primary else {"safe_workflow_success": 0, "safe_workflow_success_normalized": 0}
+        scores.append({"id": sample.id, "epoch": sample.epoch, "category": sample.metadata["category"], **diag})
+        lat.append(execution.get("latency_seconds"))
+    data_path = Path(args.data)
+    row, _, _ = write_results(ROOT, args.system, data_path.stem, ROOT / data_path, args.model,
+                              "inspect_run", raw, scores, lat, infra)
+    return row
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--data", help="Read existing JSONL; omitted = 10 public development examples")
@@ -72,6 +95,8 @@ def main():
     ap.add_argument("--offline-smoke", action="store_true")
     ap.add_argument("--output", help="New results directory; must not exist")
     ap.add_argument("--compare", nargs=2, metavar=("LEFT_SUMMARY", "RIGHT_SUMMARY"))
+    ap.add_argument("--system", help="Contract v2.0 system name (e.g. F1_glm5p3). With --data and --model, "
+                                     "saves per-case raw outputs, scores and a ledger row under results/ (C6)")
     args = ap.parse_args()
     for key in ("epochs", "max_samples", "max_turns", "max_calls", "seconds"):
         if getattr(args, key) < 1:
@@ -123,6 +148,8 @@ def main():
                                 ctl_server=False,
                                 model_args={"custom_outputs": mock_reply} if args.offline_smoke else {})
             summary = summarize(logs[0])
+            if args.system and args.data and not args.offline_smoke:
+                summary["contract_v2_ledger"] = save_contract_results(logs[0], args)
         (out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
         printable = {k: v for k, v in summary.items() if k not in ("records", "task_metadata", "tokens_by_model")}
         print(json.dumps(printable, indent=2))

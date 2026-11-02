@@ -114,6 +114,8 @@ def safe_workflow():
                                  execution.get("limit_exceeded", True))
         if execution.get("error"):
             result["safe_workflow_success"] = 0
+            if "safe_workflow_success_normalized" in result:
+                result["safe_workflow_success_normalized"] = 0
         return Score(value=result["safe_workflow_success"], answer=execution.get("final"),
                      explanation=canonical(result), metadata=result)
     return score

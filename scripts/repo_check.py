@@ -20,6 +20,11 @@ FREEZE_GROUPS = {
     "test": ["data/test.jsonl"],
     "test_hard": ["data/test_hard.jsonl"],
     "config": ["config/tools.json", "config/policies.yaml"],
+    # Unified evaluation contract v2.0: contract, normative spec, scorer/harness code and simulator
+    "eval_v2": ["docs/EVAL_CONTRACT_v2.md", "docs/POLICY_SPEC.md", "src/mock_tools.py",
+                "nanda-eval/src/iam_benchmark/core.py", "nanda-eval/src/iam_benchmark/legacy.py",
+                "nanda-eval/src/iam_benchmark/inspect_task.py", "nanda-eval/src/iam_benchmark/records.py",
+                "nanda-eval/scripts/run_eval.py", "nanda-eval/requirements.txt"],
 }
 TRAIN_SPLITS = ("train", "validation", "train_hard")  # Fireworks SFT format
 EVAL_SPLITS = ("test", "pilot", "test_hard")  # held out: state + expected results

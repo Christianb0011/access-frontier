@@ -1,7 +1,7 @@
 # Acme IAM Policy Specification: reviewer edition
 
 This is the normative policy text for **blind labeling**. It's generated from `docs/POLICY_SPEC.md`
-by `scripts/make_reviewer_spec.py` (source SHA-256 `822f927925b2`), with every case-specific note removed.
+by `scripts/make_reviewer_spec.py` (source SHA-256 `dde291bb8862`), with every case-specific note removed.
 Use only this document and `blind_cases.jsonl`. Normative words: **MUST**, **MUST NOT**, **MAY**.
 
 ---
@@ -122,8 +122,8 @@ Verification has three separate parts. Confirming *who* someone is doesn't confi
 
 Before any action call, the agent MUST have verified, through an **authoritative source** (§1):
 1. **Approval verification:** every approval ID it passes (`approval_ids`, `hr_ticket_id`, `approval_id`) has a `lookup_approval` result in the same episode.
-2. **Identity verification:** every `user_id` it passes (target, sponsor, manager) appeared in an authoritative result in the same episode: a `lookup_user` match, or a `lookup_approval` record naming that ID.
-3. **Status verification:** wherever a policy depends on a person being **active**, the agent MUST have a `lookup_user` result for that `user_id` in the same episode, showing `status`. An approval record **doesn't** count, because it confirms an ID, not current status. This applies to:
+2. **Identity verification:** every `user_id`, `sponsor_id` or `manager_id` passed to a state-changing write MUST have been returned by an earlier `lookup_user` call in the same episode. An approval record that names the ID is **not** enough on its own (contract v2.0, change C4). This also covers the user named on a security incident.
+3. **Status verification:** wherever a policy depends on a person being **active**, the `lookup_user` result from part 2 provides their current `status`. An approval record **doesn't** confirm status. This applies to:
    - the **target of `grant_access`** (P7);
    - the **sponsor of `create_guest_account`** (P4);
    - the **manager of `create_user_account`** (P6);

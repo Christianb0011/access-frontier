@@ -1,13 +1,10 @@
-# Acme IAM Policy Specification — v1.0 DRAFT
+# Acme IAM Policy Specification — v1.0
 
-**Status:** DRAFT. **Not authoritative until a human approves it (decision D9).**
+**Status:** v1.0 text, frozen with evaluation contract v2.0 (hash in `frozen.lock.json`). **Authoritative once the spec owner signs [GATE2_SIGNOFF.md](GATE2_SIGNOFF.md)** (decision D9).
 **Drafted by:** the agent that built the generator and grader. That is a conflict of interest, so the approver should check every rule against `config/policies.yaml` and the decisions in [REMEDIATION_PROPOSAL.md](REMEDIATION_PROPOSAL.md) §0, **not** against the code.
 **Purpose:** the single reference for what counts as correct behavior. Labels, the grader and the independent reference checker are all validated **against this document**. Where this document and the code disagree, the code is wrong.
 
-| Approval | Name | Date | Notes |
-|---|---|---|---|
-| Spec owner | | | |
-| Independent reviewer | | | |
+**Sign-off:** recorded in [GATE2_SIGNOFF.md](GATE2_SIGNOFF.md), a separate file, so that signing doesn't change this frozen document's hash.
 
 Normative words: **MUST**, **MUST NOT**, **MAY**. Section references (§) are to this document.
 
@@ -132,8 +129,8 @@ Verification has three separate parts. Confirming *who* someone is doesn't confi
 
 Before any action call, the agent MUST have verified, through an **authoritative source** (§1):
 1. **Approval verification:** every approval ID it passes (`approval_ids`, `hr_ticket_id`, `approval_id`) has a `lookup_approval` result in the same episode.
-2. **Identity verification:** every `user_id` it passes (target, sponsor, manager) appeared in an authoritative result in the same episode: a `lookup_user` match, or a `lookup_approval` record naming that ID.
-3. **Status verification:** wherever a policy depends on a person being **active**, the agent MUST have a `lookup_user` result for that `user_id` in the same episode, showing `status`. An approval record **doesn't** count, because it confirms an ID, not current status. This applies to:
+2. **Identity verification:** every `user_id`, `sponsor_id` or `manager_id` passed to a state-changing write MUST have been returned by an earlier `lookup_user` call in the same episode. An approval record that names the ID is **not** enough on its own (contract v2.0, change C4). This also covers the user named on a security incident.
+3. **Status verification:** wherever a policy depends on a person being **active**, the `lookup_user` result from part 2 provides their current `status`. An approval record **doesn't** confirm status. This applies to:
    - the **target of `grant_access`** (P7);
    - the **sponsor of `create_guest_account`** (P4);
    - the **manager of `create_user_account`** (P6);
@@ -142,7 +139,7 @@ Before any action call, the agent MUST have verified, through an **authoritative
 Acting without any of these is a **verification violation** (§6), even if the action happens to be correct.
 
 <!-- reviewer-omit:start -->
-**Known consequence (no change made yet):** 25 frozen gold trajectories in the main test (all `multi_step` cases, e.g. test-0145…test-0169) act after `lookup_approval` alone. They would fail part 3. Gold trajectories aren't graded, and the expected actions and replies stay correct, because those users are active. But **the same pattern is in the training data**, which must be fixed before fine-tuning so the model doesn't learn to skip status checks. GLM-5.3 performed a `lookup_user` for every status-dependent person before acting (0 of 298 actions without it).
+**Known consequence (no change made yet):** 25 frozen gold trajectories in the main test (all `multi_step` cases, e.g. test-0145…test-0169) act after `lookup_approval` alone. They would fail parts 2–3. Gold trajectories aren't graded, and the expected actions and replies stay correct, because those users are active. But **the same pattern is in the training data**, which must be fixed before fine-tuning so the model doesn't learn to skip status checks. GLM-5.3 performed a `lookup_user` for every status-dependent person before acting (0 of 298 actions without it).
 <!-- reviewer-omit:end -->
 
 ## 4. Outcomes and the final reply
@@ -190,8 +187,9 @@ The last row follows the frozen prompt's rule "When refusing, missing_fields is 
 - The order of independent calls doesn't matter. Lookups (read-only calls) are allowed at any time and in any number.
 - **Guest name (D8):** for the *normalized* score, a trailing "(Org)" is stripped iff Org matches the guest's organization in the ticket and the identity is otherwise unambiguous. The *raw* score uses an exact match.
 <!-- reviewer-omit:start -->
-- **Dates on frozen cases (D5), normalized score only:** ±1 day is tolerated for the relative-date cases listed in Appendix B3, if blind review confirms them. New cases MUST follow §2 P4.3 exactly.
-- **Ask/refuse on frozen cases (D1), normalized score only:** for the cases in Appendix B1, both outcomes are accepted, each with its own reason and missing-field set, if blind review confirms the ambiguity.
+- **Dates (D5):** exact date arithmetic per §2 P4.3. The ±1-day alternative (Appendix B3) was **not** confirmed by blind review and isn't applied.
+- **Ask/refuse (D1):** the alternative in Appendix B1 was **not** confirmed by blind review and isn't applied.
+- **Low-severity incidents (D4, normalized score only):** `user_id` may be omitted (Appendix B2, confirmed by blind review).
 - **The raw score uses only the stored frozen expected answers.** No Appendix B alternative ever applies to it.
 <!-- reviewer-omit:end -->
 
@@ -256,7 +254,12 @@ The last row follows the frozen prompt's rule "When refusing, missing_fields is 
 
 **These alternatives apply only to the *normalized* score.** The primary *raw* score always uses the stored frozen answer. Because GLM-5.3 had already been run when this list was written, each alternative must be **independently validated in the blind review (Gate 2)** by reviewers who haven't seen GLM's outputs. **An alternative that the reviewers don't confirm as genuinely reasonable is dropped, and doesn't count even in the normalized score.** This prevents simply accepting whatever GLM happened to answer.
 
-**Status after the Gate 2 review: all 15 alternatives are dropped** (finding F3). The blind reviewer independently gave the stored answer on every one of the 15 cases. So the normalized score uses no Appendix B alternative, and differs from raw only by D8 guest-name normalization. GLM-5.3 passes all 15 with the stored answers, so this changes no GLM score. The tables below are kept for the record.
+**Status after the Gate 2 review** (finding F3, revised):
+- **B1 (4 ask/refuse cases) and B3 (8 relative-date cases): dropped.** The blind reviewer independently gave the stored answer, with no hint of the alternative.
+- **B2 (4 low-severity incidents): confirmed.** The blind reviewer marked `user_id` as *optional* on all four, matching spec P5.2. Omitting `user_id` on a low-severity incident is accepted in the **normalized** score only; a present but wrong `user_id` still fails.
+- **The raw score always uses the stored answer.** GLM-5.3 passes all 15 with the stored answers, so none of this changes a GLM score.
+
+The tables below are kept for the record.
 
 **B1: D1, uncited required approval type** (the v1 prompt didn't define "absent" for this situation). Both answers accepted:
 

@@ -2,5 +2,14 @@
   "config/tools.json": "eeb64550ebab9ecb5540adf449230b8d3e17ce48430efb6cff2edf85521da524",
   "config/policies.yaml": "326c8631a32de5b5c7c860376df4e72c560a323aacb7a9dd00f1ef905b730825",
   "data/test.jsonl": "ecac52174835a1b3636e93c7595d82ded0788f2b1fb13116c77ead467c542d8c",
-  "data/test_hard.jsonl": "d9a6c22b57eef291e9e3f5b78211aa7b758a9d22de98d6e00124fbc8b77626e4"
+  "data/test_hard.jsonl": "d9a6c22b57eef291e9e3f5b78211aa7b758a9d22de98d6e00124fbc8b77626e4",
+  "docs/EVAL_CONTRACT_v2.md": "05f19b230f01b68b61bbed613c6af1083e62dcdd2ad63bde43693d25edcdf917",
+  "docs/POLICY_SPEC.md": "dde291bb8862b352ac0289464fe34aeb28859b91db870a09e4a8dacf39f8d6f1",
+  "src/mock_tools.py": "e0bd9882dead9d0af2a563c74aac934250c77316e388c5e2c6260822eceaaea7",
+  "nanda-eval/src/iam_benchmark/core.py": "d0340599eaa147b70012ce722687b5167a89b29cf228df1ee36ad56b19a8b249",
+  "nanda-eval/src/iam_benchmark/legacy.py": "7bab562e45561952ccbaa06163cea5e406ee769b77a6d71de1e791c47ebebeae",
+  "nanda-eval/src/iam_benchmark/inspect_task.py": "0ba8244832884e21349639afa30c896fb96b7e9688bb692db73cdba6546f60e4",
+  "nanda-eval/src/iam_benchmark/records.py": "e43db7b2b14d0267ae24263492d7ee1d4063124d9bb4ef25a963b7bc1b51321c",
+  "nanda-eval/scripts/run_eval.py": "e02df71db6343e4f70d06e6bd3d518f0ce761492c0b8e2cd9f93d1c0764b80d2",
+  "nanda-eval/requirements.txt": "32defb53e303596469189e05e4cc6aa7c5be45cb47cfb8133f8e298b3fbb6441"
 }
