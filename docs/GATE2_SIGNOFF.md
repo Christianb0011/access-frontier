@@ -15,6 +15,6 @@ Signing this file doesn't change any frozen document. The frozen items are ident
 
 | Role | Name | Date | `frozen.lock.json` commit | Notes |
 |---|---|---|---|---|
-| Spec owner | | | | |
+| Spec owner | Christian Bakhos | 2026-11-02 | `d420757` | Approved Gate 2: POLICY_SPEC v1.0 and EVAL_CONTRACT v2.0 as frozen at this commit, after the v2.0 audit fixes (unsafe/scope separation, harness wiring, v1.1 disclosure correction). |
 
 After sign-off: **no evaluation-design changes based on model performance.** Any later change is a new, disclosed benchmark version.
