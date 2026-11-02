@@ -1,0 +1,190 @@
+[
+ {
+  "id": "test-0182",
+  "why": "Appendix B1 (D1 ask/refuse)"
+ },
+ {
+  "id": "test-0184",
+  "why": "Appendix B1 (D1 ask/refuse)"
+ },
+ {
+  "id": "test_hard-0032",
+  "why": "Appendix B1 (D1, inside a batch)"
+ },
+ {
+  "id": "test_hard-0035",
+  "why": "Appendix B1 (D1, inside a batch)"
+ },
+ {
+  "id": "test-0038",
+  "why": "Appendix B2 (low-severity user_id)"
+ },
+ {
+  "id": "test_hard-0031",
+  "why": "Appendix B2 (low + high incidents)"
+ },
+ {
+  "id": "test_hard-0036",
+  "why": "Appendix B2+B3"
+ },
+ {
+  "id": "test_hard-0044",
+  "why": "Appendix B2 (low-severity user_id)"
+ },
+ {
+  "id": "test-0036",
+  "why": "Appendix B3 (relative expiry date)"
+ },
+ {
+  "id": "test-0089",
+  "why": "Appendix B3 (relative expiry date)"
+ },
+ {
+  "id": "test-0094",
+  "why": "Appendix B3 (relative expiry date)"
+ },
+ {
+  "id": "test_hard-0030",
+  "why": "Appendix B3 (relative expiry date)"
+ },
+ {
+  "id": "test_hard-0038",
+  "why": "Appendix B3 (relative expiry date)"
+ },
+ {
+  "id": "test_hard-0043",
+  "why": "Appendix B3 (relative expiry date)"
+ },
+ {
+  "id": "test_hard-0073",
+  "why": "Appendix B3 (relative expiry date)"
+ },
+ {
+  "id": "test-0173",
+  "why": "policy conflict / refusal"
+ },
+ {
+  "id": "test-0180",
+  "why": "policy conflict / refusal"
+ },
+ {
+  "id": "test-0189",
+  "why": "policy conflict / refusal"
+ },
+ {
+  "id": "test-0186",
+  "why": "policy conflict / refusal"
+ },
+ {
+  "id": "test-0127",
+  "why": "missing information"
+ },
+ {
+  "id": "test-0139",
+  "why": "missing information"
+ },
+ {
+  "id": "test-0137",
+  "why": "missing information"
+ },
+ {
+  "id": "test-0090",
+  "why": "mixed workflow, partial"
+ },
+ {
+  "id": "test-0091",
+  "why": "mixed workflow, partial"
+ },
+ {
+  "id": "test-0087",
+  "why": "mixed workflow, partial"
+ },
+ {
+  "id": "test-0198",
+  "why": "approval export, no valid approval"
+ },
+ {
+  "id": "test-0191",
+  "why": "approval export, pick the valid one"
+ },
+ {
+  "id": "test-0145",
+  "why": "approval-defined request + status verification"
+ },
+ {
+  "id": "test-0164",
+  "why": "approval-defined request + status verification"
+ },
+ {
+  "id": "test-0107",
+  "why": "out-of-scope boundary ('unlock my account')"
+ },
+ {
+  "id": "test-0102",
+  "why": "out of scope"
+ },
+ {
+  "id": "test-0060",
+  "why": "safety: high-severity incident"
+ },
+ {
+  "id": "test_hard-0079",
+  "why": "safety: conflict visible only in backend state"
+ },
+ {
+  "id": "test_hard-0088",
+  "why": "safety: conflict visible only in backend state"
+ },
+ {
+  "id": "test_hard-0076",
+  "why": "safety: conflict visible only in backend state"
+ },
+ {
+  "id": "test_hard-0039",
+  "why": "complex workflow: large mixed batch"
+ },
+ {
+  "id": "test_hard-0015",
+  "why": "complex workflow: chained lookup"
+ },
+ {
+  "id": "test_hard-0028",
+  "why": "complex workflow: chained lookup"
+ },
+ {
+  "id": "test_hard-0025",
+  "why": "complex workflow: chained lookup"
+ },
+ {
+  "id": "test_hard-0066",
+  "why": "boundary: over the limit"
+ },
+ {
+  "id": "test_hard-0074",
+  "why": "boundary: at the limit"
+ },
+ {
+  "id": "test_hard-0067",
+  "why": "boundary: at the limit"
+ },
+ {
+  "id": "test_hard-0049",
+  "why": "large export, no valid approval"
+ },
+ {
+  "id": "test_hard-0052",
+  "why": "large export, near-miss approvals"
+ },
+ {
+  "id": "test_hard-0004",
+  "why": "identity: same-name employees"
+ },
+ {
+  "id": "test_hard-0005",
+  "why": "identity: same-name employees"
+ },
+ {
+  "id": "test_hard-0104",
+  "why": "distractor: cancelled/expired approval in thread"
+ }
+]
