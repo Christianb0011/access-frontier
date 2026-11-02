@@ -2,6 +2,7 @@
 
 Inspect AI benchmark with deterministic IAM state/trace scoring and optional, separately reported LLM communication judging.
 
+- [IAM Hard v2 specification](V2_SPEC.md): separate 80-case evaluation / 20-case development snapshot, independent policy checker, blind review pack, and separate IAM/format scores. Human validation remains pending.
 - [Specification and exact scoring](SPEC.md)
 - [Full 325-case Fireworks run and data assessment](reports/full-frontier-evaluation.md): Kimi K3 strict 192/200 standard, 103/105 hard, 20/20 pilot; zero unsafe actions. Includes case-level evidence and reproducible commands.
 - [Results and limitations](reports/validation.md)

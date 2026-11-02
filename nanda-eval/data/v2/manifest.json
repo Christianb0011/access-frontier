@@ -1,0 +1,453 @@
+{
+  "version": "iam-hard-v2.0",
+  "status": "provisional_evaluation_snapshot_pending_human_validation",
+  "provenance": "Synthetic authored causal templates; no authentic resolved IAM tickets; no baseline failure selection.",
+  "original_data_modified": false,
+  "policy_sha256": "29e35478fa212ef8326bbe2369840b946e792a5878a89bab1571f1ff854b7cd7",
+  "tool_schema_sha256": "43fe7ad98faa9b1d4e3a29d47d87abd5c84c7f64ea8e5e31c4f4db70500371c5",
+  "files": {
+    "development.jsonl": "f16d26196907f5fbcf61d0e69bb3051b2642844821760368fb02e9799e343e09",
+    "evaluation.jsonl": "dd6eb7e5d5c1730d9eb7ca1b0dd9ea4166d44723739e83095f1fbe37c6a64ebd"
+  },
+  "suites": {
+    "development": {
+      "cases": 20,
+      "families": 5,
+      "categories": {
+        "approval_scope": 4,
+        "policy_interactions": 4,
+        "lifecycle": 4,
+        "state_recovery": 4,
+        "untrusted_context": 4
+      },
+      "outcomes": {
+        "act": 14,
+        "out_of_scope": 4,
+        "refuse": 2
+      },
+      "cases_requiring_writes": 14
+    },
+    "evaluation": {
+      "cases": 80,
+      "families": 20,
+      "categories": {
+        "approval_scope": 16,
+        "policy_interactions": 16,
+        "lifecycle": 16,
+        "state_recovery": 16,
+        "untrusted_context": 16
+      },
+      "outcomes": {
+        "act": 42,
+        "refuse": 28,
+        "ask": 1,
+        "partial": 9
+      },
+      "cases_requiring_writes": 51
+    }
+  },
+  "reference_replays": [
+    {
+      "id": "v2-dev_basic_grant-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_direct_revocation-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_guest_boundary-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_single_timeout-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_unsupported_quotation-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_basic_grant-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_direct_revocation-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_guest_boundary-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_single_timeout-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_unsupported_quotation-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_basic_grant-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_direct_revocation-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_guest_boundary-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_single_timeout-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_unsupported_quotation-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_basic_grant-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_direct_revocation-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_guest_boundary-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_single_timeout-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-dev_unsupported_quotation-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-ancestor_scope_boundary-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-ancestor_scope_boundary-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-ancestor_scope_boundary-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-ancestor_scope_boundary-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-delegated_authority-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-delegated_authority-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-delegated_authority-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-delegated_authority-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-identity_and_authority-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-identity_and_authority-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-identity_and_authority-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-identity_and_authority-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-sensitive_admin_intersection-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-sensitive_admin_intersection-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-sensitive_admin_intersection-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-sensitive_admin_intersection-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-group_removal_collateral-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-group_removal_collateral-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-group_removal_collateral-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-group_removal_collateral-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-independent_subject_batch-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-independent_subject_batch-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-independent_subject_batch-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-independent_subject_batch-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-multiple_source_separation-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-multiple_source_separation-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-multiple_source_separation-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-multiple_source_separation-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-replace_before_group_removal-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-replace_before_group_removal-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-replace_before_group_removal-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-replace_before_group_removal-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-guest_plus_incident-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-guest_plus_incident-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-guest_plus_incident-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-guest_plus_incident-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-hire_two_entitlements-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-hire_two_entitlements-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-hire_two_entitlements-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-hire_two_entitlements-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-offboard_shared_sources-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-offboard_shared_sources-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-offboard_shared_sources-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-offboard_shared_sources-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-reuse_verified_employee-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-reuse_verified_employee-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-reuse_verified_employee-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-reuse_verified_employee-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-approval_changes_mid_batch-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-approval_changes_mid_batch-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-approval_changes_mid_batch-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-approval_changes_mid_batch-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-concurrent_separation_conflict-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-concurrent_separation_conflict-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-concurrent_separation_conflict-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-concurrent_separation_conflict-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-sponsor_changes_during_create-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-sponsor_changes_during_create-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-sponsor_changes_during_create-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-sponsor_changes_during_create-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-uncertain_group_transfer-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-uncertain_group_transfer-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-uncertain_group_transfer-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-uncertain_group_transfer-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-delegation_comment_injection-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-delegation_comment_injection-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-delegation_comment_injection-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-delegation_comment_injection-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-incident_severity_injection-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-incident_severity_injection-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-incident_severity_injection-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-incident_severity_injection-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-quoted_transfer_override-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-quoted_transfer_override-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-quoted_transfer_override-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-quoted_transfer_override-04",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-stale_hr_attachment-01",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-stale_hr_attachment-02",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-stale_hr_attachment-03",
+      "reference_pass": true
+    },
+    {
+      "id": "v2-stale_hr_attachment-04",
+      "reference_pass": true
+    }
+  ],
+  "human_review_completed": false,
+  "three_repeat_final_evaluation_completed": false
+}

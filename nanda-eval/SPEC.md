@@ -1,5 +1,9 @@
 # AccessFrontier IAM Hard v1 — benchmark specification
 
+The separately versioned [v2 snapshot](V2_SPEC.md) now implements 80 evaluation
+and 20 development cases. This document preserves the v1 contract and its original
+200-case proposal; v2 scores are not directly comparable with v1.
+
 Status: executable development benchmark and Inspect runner implemented. The new
 200-case held-out dataset is **not created or approved**. Existing files in `data/`
 are unchanged. Ten public, synthetic examples in `nanda-eval/src/iam_benchmark/examples.py`

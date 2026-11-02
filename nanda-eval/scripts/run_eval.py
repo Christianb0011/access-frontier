@@ -22,13 +22,14 @@ from dotenv import load_dotenv
 from inspect_ai import eval as inspect_eval
 from inspect_ai.model import ModelOutput, ModelUsage
 from iam_benchmark.core import digest, objective_score
-from iam_benchmark.inspect_task import iam_benchmark, load_cases, make_world
+from iam_benchmark.inspect_task import iam_benchmark, load_cases, make_world, score_case
 from iam_benchmark.report import summarize, paired_difference
 
 
 def data_hashes():
+    roots = [ROOT / "data", EVAL_ROOT / "data"]
     return {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in sorted((ROOT / "data").rglob("*")) if p.is_file()}
+            for root in roots for p in sorted(root.rglob("*")) if p.is_file()}
 
 
 def mock_reply(*args):
@@ -44,12 +45,12 @@ def audit(path):
         world = make_world(case)
         for c in case["reference"]:
             world.call(c["name"], c["arguments"])
-        reference = objective_score(case, world.state, world.trace, case["reference_final"])
+        reference = score_case(case, world.state, world.trace, case["reference_final"])
         skipped = make_world(case)
         for c in case["reference"]:
             if c["name"] not in ("lookup_user", "lookup_approval", "get_effective_access", "get_resource", "get_workflow_record", "get_operation_status"):
                 skipped.call(c["name"], c["arguments"])
-        no_evidence = objective_score(case, skipped.state, skipped.trace, case["reference_final"])
+        no_evidence = score_case(case, skipped.state, skipped.trace, case["reference_final"])
         records.append({"id": case["id"], "category": case["category"], "reference": reference,
                         "skip_all_reads_passes": no_evidence["safe_workflow_success"]})
     return {"mode": "offline_reference_audit_not_model_performance", "cases": len(records),
@@ -62,6 +63,7 @@ def main():
     ap.add_argument("--data", help="Read existing JSONL; omitted = 10 public development examples")
     ap.add_argument("--model", help="Exact Inspect ID, e.g. fireworks/accounts/fireworks/models/<verified-id>")
     ap.add_argument("--judge-model", help="Explicit separate judge; omitted = unmeasured communication")
+    ap.add_argument("--judge-max-tokens", type=int, default=2048)
     ap.add_argument("--epochs", type=int, default=1)
     ap.add_argument("--limit", type=int)
     ap.add_argument("--max-samples", type=int, default=2)
@@ -73,7 +75,7 @@ def main():
     ap.add_argument("--output", help="New results directory; must not exist")
     ap.add_argument("--compare", nargs=2, metavar=("LEFT_SUMMARY", "RIGHT_SUMMARY"))
     args = ap.parse_args()
-    for key in ("epochs", "max_samples", "max_turns", "max_calls", "seconds"):
+    for key in ("epochs", "max_samples", "max_turns", "max_calls", "seconds", "judge_max_tokens"):
         if getattr(args, key) < 1:
             ap.error(f"--{key.replace('_', '-')} must be positive")
     if args.limit is not None and args.limit < 1:
@@ -85,7 +87,8 @@ def main():
     before = data_hashes()
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     out = Path(args.output) if args.output else EVAL_ROOT / "runs" / stamp
-    if (ROOT / "data").resolve() == out.resolve() or (ROOT / "data").resolve() in out.resolve().parents:
+    if any(root.resolve() == out.resolve() or root.resolve() in out.resolve().parents
+           for root in (ROOT / "data", EVAL_ROOT / "data")):
         ap.error("Output cannot be inside data/")
     if not args.audit and not args.offline_smoke:
         if not args.model:
@@ -100,7 +103,7 @@ def main():
         if args.audit:
             summary = audit(args.data)
         else:
-            task = iam_benchmark(args.data, args.judge_model, args.max_turns, args.max_calls, args.seconds)
+            task = iam_benchmark(args.data, args.judge_model, args.max_turns, args.max_calls, args.seconds, args.judge_max_tokens)
             source = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                       for p in sorted((EVAL_ROOT / "src" / "iam_benchmark").glob("*.py"))}
             for p in [ROOT / "src/mock_tools.py", ROOT / "config/tools.json", ROOT / "config/policies.yaml"]:
