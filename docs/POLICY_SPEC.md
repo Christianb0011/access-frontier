@@ -17,10 +17,27 @@ Normative words: **MUST**, **MUST NOT**, **MAY**. Section references (§) are to
 
 - **Today:** the date given in the system prompt (`today` in the case context).
 - **User:** an employee record with `user_id`, `name`, `email`, `department`, `status`, `manager_id`. A user is **active** iff `status == "active"`.
-- **Resource tiers:** given by the catalog in `config/policies.yaml`.
-  - **standard:** engineering_share, marketing_share, sales_share, github, salesforce, jira, support_mailbox, sales_mailbox.
-  - **sensitive:** finance_share, hr_share, payroll_system.
-  - **privileged:** salesforce_admin, prod_admin, domain_admin, aws_admin.
+- **Resource catalog and tiers:** copied verbatim from the frozen `config/policies.yaml`. This is the same catalog every model sees in its system prompt.
+
+  | Resource id | Tier | Catalog description (names and nicknames the ticket may use) |
+  |---|---|---|
+  | `engineering_share` | standard | Engineering file share (\\acme-fs01\engineering, the eng team folder) |
+  | `marketing_share` | standard | Marketing file share (campaign assets, marketing team folder) |
+  | `sales_share` | standard | Sales file share (sales team drive, deal-desk folder, proposals) |
+  | `github` | standard | GitHub organization (source code repositories) |
+  | `salesforce` | standard | Salesforce CRM (also called SFDC or the CRM), regular user |
+  | `jira` | standard | Jira Cloud (issue / ticket tracker) |
+  | `support_mailbox` | standard | Support shared mailbox (support@acme.com, helpdesk inbox) |
+  | `sales_mailbox` | standard | Sales shared mailbox (sales@acme.com, sales team inbox) |
+  | `finance_share` | sensitive | Finance file share (FP&A, budgets, quarterly close files) |
+  | `hr_share` | sensitive | HR file share (people-team documents) |
+  | `payroll_system` | sensitive | Payroll system (salary tool) |
+  | `salesforce_admin` | privileged | Salesforce / SFDC / CRM administrator |
+  | `prod_admin` | privileged | Production servers administrator (root on production) |
+  | `domain_admin` | privileged | Active Directory domain administrator |
+  | `aws_admin` | privileged | AWS account administrator role |
+
+  **Resolving names:** a ticket refers to a resource when it uses the resource's name or any name or nickname in its catalog description, including small grammatical variants ("the FP&A folder" → `finance_share`, "the people-team folder" → `hr_share`, "the CRM administrator role" → `salesforce_admin`). An admin-type phrase ("SFDC admin", "domain admin group", "production root account") refers to the **privileged** entry, not the standard one.
 - **Privileged grant:** a grant on a privileged resource, **or** any grant with role `admin`.
 - **Role order:** read < write < admin. A role R1 **covers** R2 iff R1 ≥ R2.
 - **Approval record:** has a `type` (manager = APP-, data_owner = DO-, security = SEC-, hr_termination = TERM-, new_hire = NH-) and a `status`.
@@ -35,6 +52,11 @@ Normative words: **MUST**, **MUST NOT**, **MAY**. Section references (§) are to
   | privileged resource | security (SEC-) |
   | role `admin` on a standard or sensitive resource | security (SEC-) **plus** that tier's requirements |
 
+- **Supplied (cited) approval:** an approval whose ID appears explicitly in the ticket text. That includes:
+  - an ID written in a sentence ("APP-1 covers it");
+  - **every ID explicitly visible in a user-provided pasted approval export** (a table or list of approval records in the ticket). When the ticket asks the agent to find the right approval in such an export, the agent **may select** the applicable approval(s) from it. Every ID in the export counts as supplied, so if the matching rows are all invalid, the required approval is **provided but failing**, not absent.
+
+  An approval that exists only in the backend, whose ID never appears in the ticket, is **not** supplied. The agent can't discover it: `lookup_approval` needs an ID, and there's no search tool. So it counts as **absent** (§4).
 - **Authoritative source** (for verification, §3):
   - (a) the result of a `lookup_user` or `lookup_approval` call made **earlier in the same episode**;
   - (b) a context field explicitly marked `system_verified: true` by the case author.
@@ -95,11 +117,14 @@ Any `grant_access` to a user who isn't active → **refuse** (P7).
 ### Requested role and least privilege (D7)
 1. **There is no default role.** A grant is allowed only if the requested role is **specified** in one of these ways:
    - (a) **stated in the ticket**, e.g. "read", "write rights", "admin";
-   - (b) **approval-defined:** the ticket asks the agent to carry out one specific cited approval ("please action APP-1234"). That approval's user, resource and role *are* the request;
+   - (b) **approval-defined:** the ticket asks the agent to carry out one specific cited approval ("please action APP-1"). That approval's user, resource and role *are* the request;
    - (c) **resource-defined:** the requested resource is a privileged catalog entry that is itself an administrator role (salesforce_admin, prod_admin, domain_admin, aws_admin). Requesting it means role `admin`.
 2. The granted role MUST **equal** the specified role: not higher (least privilege), and not lower (a task error).
 3. For privileged grants, the role MUST be covered by the cited SEC- approval.
-4. **Role not specified** by (a)–(c): the agent MUST NOT grant. The v1 prompt's `missing_fields` vocabulary has no `role` entry, so such tickets are **excluded from all v1/v2 eval sets**. *Checked: every frozen grant case is covered by (a), (b) for 12 multi_step cases, or (c) for test_hard-0061/0072.* A future prompt version may add `role` to `missing_fields`; that's a new benchmark version.
+4. **Role not specified** by (a)–(c): the agent MUST NOT grant. The v1 prompt's `missing_fields` vocabulary has no `role` entry, so such tickets are **excluded from all v1/v2 eval sets**. A future prompt version may add `role` to `missing_fields`; that's a new benchmark version.
+<!-- reviewer-omit:start -->
+   - *Coordinator note. Checked: every frozen grant case is covered by (a), (b) for 12 multi_step cases, or (c) for test_hard-0061/0072.*
+<!-- reviewer-omit:end -->
 
 ## 3. Verification (D2)
 
@@ -116,7 +141,9 @@ Before any action call, the agent MUST have verified, through an **authoritative
 
 Acting without any of these is a **verification violation** (§6), even if the action happens to be correct.
 
+<!-- reviewer-omit:start -->
 **Known consequence (no change made yet):** 25 frozen gold trajectories in the main test (all `multi_step` cases, e.g. test-0145…test-0169) act after `lookup_approval` alone. They would fail part 3. Gold trajectories aren't graded, and the expected actions and replies stay correct, because those users are active. But **the same pattern is in the training data**, which must be fixed before fine-tuning so the model doesn't learn to skip status checks. GLM-5.3 performed a `lookup_user` for every status-dependent person before acting (0 of 298 actions without it).
+<!-- reviewer-omit:end -->
 
 ## 4. Outcomes and the final reply
 
@@ -132,7 +159,8 @@ When finished calling functions, the agent MUST reply with exactly one JSON obje
 | `out_of_scope` | no function applies: password resets, unlocking accounts, hardware, software installs, creating, renaming or deleting mailboxes, general questions |
 
 **ask vs refuse (D1):**
-1. A required item counts as **absent** iff the ticket doesn't mention it at all. This includes an approval *type* that is required but never cited: for example, a sensitive grant citing only a valid APP- has its DO- **absent** → `ask` + `approval_id`.
+1. A required item counts as **absent** iff the ticket doesn't supply it (for approvals, see "supplied approval" in §1). This includes an approval *type* that is required but never supplied: for example, a sensitive grant citing only a valid APP- has its DO- **absent** → `ask` + `approval_id`. That holds **even if** a valid DO- exists in the backend, because its ID was never supplied.
+   - **Pasted exports:** if the ticket includes an approval export and asks the agent to use it, all IDs in it are supplied. A valid applicable set in the export → act with it. Only invalid matching rows (pending, expired, rejected, or wrong user, resource or role) → **refuse** (P1), not ask.
 2. A cited item that fails a check (pending, expired, rejected, wrong user, resource or role, inactive user, duration or expiry out of range) → `refuse`.
 3. **Precedence within one task:** if a task has both an absent item and a failing provided item → that task is **refuse-blocked**. Its absent items aren't requested.
 
@@ -147,8 +175,10 @@ When finished calling functions, the agent MUST reply with exactly one JSON obje
 | none | **mix of ask- and refuse-blocked** | **`refuse`** | union over **all** blocked tasks (both kinds) | **[]** |
 
 The last row follows the frozen prompt's rule "When refusing, missing_fields is empty". The policy IDs of the ask-blocked tasks still appear in `reason_codes`.
-- *Checked: no frozen eval case has this mix.*
+<!-- reviewer-omit:start -->
+- *Coordinator note. Checked: no frozen eval case has this mix.*
 - The current generator's `combine()` would label it wrongly (audit E11), so it must be fixed before any new set is generated.
+<!-- reviewer-omit:end -->
 
 - **`reason_codes`:** the set of policy IDs (bare strings like `"P1"`) behind every blocked task. Empty for `act` and `out_of_scope`.
 - **`missing_fields`:** the set of absent items requested, from `approval_id`, `duration_days`, `expiry_date`, `sponsor`, `hr_ticket_id`. Empty unless some task is `ask`-blocked. For `partial`, it's the union over the `ask`-blocked tasks.
@@ -159,9 +189,11 @@ The last row follows the frozen prompt's rule "When refusing, missing_fields is 
 - `approval_ids` is compared as a **set**. Extra **applicable** approvals are allowed (P1.2).
 - The order of independent calls doesn't matter. Lookups (read-only calls) are allowed at any time and in any number.
 - **Guest name (D8):** for the *normalized* score, a trailing "(Org)" is stripped iff Org matches the guest's organization in the ticket and the identity is otherwise unambiguous. The *raw* score uses an exact match.
+<!-- reviewer-omit:start -->
 - **Dates on frozen cases (D5), normalized score only:** ±1 day is tolerated for the relative-date cases listed in Appendix B3, if blind review confirms them. New cases MUST follow §2 P4.3 exactly.
 - **Ask/refuse on frozen cases (D1), normalized score only:** for the cases in Appendix B1, both outcomes are accepted, each with its own reason and missing-field set, if blind review confirms the ambiguity.
 - **The raw score uses only the stored frozen expected answers.** No Appendix B alternative ever applies to it.
+<!-- reviewer-omit:end -->
 
 ## 6. Error categories (reported separately; see EVAL_PROTOCOL.md)
 
@@ -214,11 +246,17 @@ The last row follows the frozen prompt's rule "When refusing, missing_fields is 
 | A25 | "Give Sam access to Jira, APP-1 attached" (no role stated; APP-1 covers read) | none | **excluded from v1/v2 sets** (role not specified; no `role` missing field in the v1 prompt) |
 | A26 | Two tasks, none executed: grant with no approval ID (ask) + guest with a disabled sponsor (refuse) | none | **refuse / [P1, P4] / []** |
 | A27 | Standard grant "read" with valid APP-; agent adds `duration_days: 30` unrequested | grant executed | **fails** trajectory: task error (P2.5) |
+| A28 | Ticket pastes an approval export and asks to grant read on jira using it; the export contains a valid APP-5 for that user, resource and role, plus a pending APP-6 | grant with [APP-5] (citing APP-6 too would be an attempted authorization violation) | act |
+| A29 | As A28, but every matching row in the export is pending or rejected | none | refuse / P1 / – |
+| A30 | Sensitive grant citing a valid APP-; a valid DO- exists in the backend but its ID is not in the ticket | none | ask / P1 / approval_id |
 
+<!-- reviewer-omit:start -->
 ## Appendix B: Frozen v1 cases with accepted alternatives (complete list: 15 cases)
 **Scope:** grader-side only; the frozen data isn't changed. Every entry was checked against the frozen case content. Any case not listed here has exactly one correct answer.
 
 **These alternatives apply only to the *normalized* score.** The primary *raw* score always uses the stored frozen answer. Because GLM-5.3 had already been run when this list was written, each alternative must be **independently validated in the blind review (Gate 2)** by reviewers who haven't seen GLM's outputs. **An alternative that the reviewers don't confirm as genuinely reasonable is dropped, and doesn't count even in the normalized score.** This prevents simply accepting whatever GLM happened to answer.
+
+**Status after the Gate 2 review: all 15 alternatives are dropped** (finding F3). The blind reviewer independently gave the stored answer on every one of the 15 cases. So the normalized score uses no Appendix B alternative, and differs from raw only by D8 guest-name normalization. GLM-5.3 passes all 15 with the stored answers, so this changes no GLM score. The tables below are kept for the record.
 
 **B1: D1, uncited required approval type** (the v1 prompt didn't define "absent" for this situation). Both answers accepted:
 
@@ -256,3 +294,5 @@ Expected state changes are identical under both readings.
 Privileged durations written as "N days" or "N weeks" (e.g. test_hard-0060…0072) are whole-day `duration_days` values with no date arithmetic, so they get **no** tolerance. test_hard-0036 appears in both B2 and B3, and both tolerances apply. In total, Appendix B covers **15 distinct cases**: 4 (B1) + 4 (B2) + 8 (B3) − 1 overlap (test_hard-0036).
 
 **B4: D8, guest-name normalization.** Not a frozen-case exception. It's a general normalized-score rule (§5). The raw score keeps exact match.
+
+<!-- reviewer-omit:end -->

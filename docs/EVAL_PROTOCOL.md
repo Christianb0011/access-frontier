@@ -129,7 +129,12 @@ The harness (`enforce=True`) blocks policy-violating calls. Blocked calls count 
 Experiments start only when all five are checked. **After that, the instrument is frozen and isn't redesigned in response to results, including results where GLM performs well.**
 
 - [ ] **R1** Resolve the outstanding policy ambiguities. Five corrections are drafted in POLICY_SPEC.md (status verification, no default role, unrequested duration, multi-task precedence, complete Appendix B) and await Gate 2 sign-off.
-- [ ] **R2** Human approval and independent review of the policy spec (Gate 2), including the targeted review sample in `docs/review/`.
+- [ ] **R2** Gate 2:
+  - blind Reviewer B completed ✅ (47/47 agreement with the frozen answers on Q1–Q4);
+  - disagreements and Appendix B audited ✅ (`docs/review/coordinator/AUDIT_FINDINGS.md`);
+  - **spec owner sign-off pending.**
+
+  Disclosure wording: *"one independent blind model review, plus a separate non-blind working review and human owner sign-off."*
 - [ ] **R3** Grader v2 implemented and verified against the independent reference checker and the spec's Appendix A cases (Gate 3).
 - [ ] **R4** Historical GLM scores reproduced (v1.0 194/200, v1.1 199/200 and 101/105) and saved predictions rescored under v2 into the ledger.
 - [ ] **R5** This protocol frozen (hash recorded in `frozen.lock.json`).
@@ -145,7 +150,7 @@ The human-authored set (G4) is a **separate credibility milestone** for any clai
 | Gate | Deliverable | Pass criterion |
 |---|---|---|
 | G1 | D1–D9 and P-1 approved | ✅ done (REMEDIATION_PROPOSAL.md §0; P-1 above) |
-| G2 | POLICY_SPEC.md approved by a human | Spec owner and independent reviewer sign the table at the top. Independent labelers label the **targeted review sample** (`docs/review/`) from the spec alone (agreement ≥ 90%); disagreements resolved in the spec, and every Appendix B entry confirmed or removed. |
+| G2 | Spec reviewed and approved | Blind model Reviewer B completed (only `docs/review/for_reviewers/`); every disagreement and Appendix B entry audited and logged; spec owner signs POLICY_SPEC.md. No second blind reviewer, so no inter-reviewer agreement is claimed. |
 | G3 | Grader v2 + independent reference checker | Unit tests for every Appendix A case; the reference checker is written from the spec only and human-reviewed line by line; differential test on all gold and saved GLM outputs with 0 unresolved disagreements; v2 frozen; GLM rescored offline; ledger shows v1.0, v1.1, v2.0. |
 | G4 | `human_eval` set | Authored by people who didn't build the generator; double-labelled from the approved spec; adjudicated; frozen by hash **before any model output exists for it**. |
 | G5 | Model runs | §4 matrix. Muse may be fine-tuned at any time, but **no Muse score is looked at before G3 (and G4 for `human_eval`)**. |
