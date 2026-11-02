@@ -3,7 +3,9 @@
 Fireworks hackathon project. We fine-tune a small open-weight model (Qwen3 8B) to turn real enterprise IAM tickets into safe, company-specific API actions. Requests that are uncertain or high-risk get routed to a larger model (NVIDIA Nemotron 3 Super).
 
 **The claim we want to prove:**
-> Our specialized 8B model gets higher strict action accuracy than the base model. The routed system gets close to large-model quality at lower cost and latency.
+> On generic intelligence, frontier models are stronger. On our company-specific IAM task, our specialized open-weight system (Qwen3 8B + LoRA + policy harness + router) **beats the frontier model on the same ~200 held-out requests**, at lower cost.
+
+**Why it matters:** new hires lose days or weeks waiting for system access. Enterprises get thousands of repetitive, policy-sensitive IAM tickets. Enterprise IT/security teams pay for faster onboarding, fewer tickets and less IT workload.
 
 **The story:** real IT-ticket language → verified company-specific data → fine-tuned open model → deterministic safety checks → large-model fallback only when needed → measured gains in quality, latency and cost.
 
@@ -52,20 +54,21 @@ Fireworks hackathon project. We fine-tune a small open-weight model (Qwen3 8B) t
 2. **Expand** each ticket into 2–4 Acme scenarios: valid → `execute`, missing approval → `clarify`, policy conflict → `deny`/`escalate`, irrelevant → `no_action`.
 3. **Labels come from deterministic rules, never from an LLM.** An LLM can only paraphrase the request text.
 4. **Validate** every record: (a) JSON/schema check, (b) run the calls against the mock Acme environment, (c) check the expected result against every policy. Drop anything that fails.
-5. **Split by original ticket family before paraphrasing.** Train 400–600 / Val 50–80 / Test 100–150. All variants of one ticket stay in the same split.
+5. **Split by original ticket family before paraphrasing.** Train 400–600 / Val 50–80 / Test ~200 (weighted toward hard categories, see [TASKS.md](TASKS.md)). All variants of one ticket stay in the same split.
 6. **Never edit test answers after seeing model failures.**
 
 ## Evaluation: strict pass
 A prediction passes only if **all** of these are correct: decision, tool names, tool order, arguments, reason code, and no extra unsafe calls.
 
-| System | Strict pass rate | Unsafe actions | Invalid JSON | p50 latency | Cost/request |
+| System | Strict pass rate (95% CI) | Unsafe actions | Invalid JSON | p50 latency | Cost/request |
 |---|---|---|---|---|---|
-| Base Qwen3 8B | | | | | |
-| Tuned Qwen3 8B | | | | | |
-| Large fallback (Nemotron) | | | | | |
-| Tuned + router | | | | | |
+| F: Frontier model(s), policies in prompt | | | | | |
+| A: Base Qwen3 8B, policies in prompt | | | | | |
+| B: Fine-tuned Qwen3 8B | | | | | |
+| C: Fine-tuned + policy harness | | | | | |
+| D: Fine-tuned + harness + router | | | | | |
 
-Headline chart (`results/pareto.png`): x = cost or latency, y = strict pass rate.
+Headline: **+N pp vs frontier** (with McNemar significance). Charts: a bar chart of the systems, plus `results/pareto.png` (x = cost/latency, y = strict pass rate). Results are also broken down per test category.
 
 ## Router (our own Python logic, not the Fireworks deployment router)
 ```
