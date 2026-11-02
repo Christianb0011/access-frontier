@@ -108,24 +108,51 @@ def check_secrets(staged):
                 break
 
 
-def load_schema_validator():
-    try:
-        import jsonschema
-    except ImportError:
-        warnings.append("jsonschema not installed: skipping output-schema validation (pip install -r requirements.txt)")
-        return None
-    schema = json.loads((ROOT / "config/output_schema.json").read_text())
-    return jsonschema.Draft7Validator(schema)
-
-
 def user_text(row):
     return " ".join(m.get("content", "") for m in row.get("messages", []) if m.get("role") == "user").strip().lower()
 
 
+def user_text_raw(row):
+    return "\n".join(m.get("content", "") for m in row.get("messages", []) if m.get("role") == "user")
+
+
+def skeletons(text):
+    """Sentence-level wording templates: names, ids, dates and numbers masked; table rows ignored."""
+    out = set()
+    for line in text.splitlines():
+        if "|" in line:
+            continue
+        for sent in re.split(r"(?<=[.!?])\s+", line):
+            s = re.sub(r"\b[A-Z]+-\d+\b", "ID", sent)
+            s = re.sub(r"\d{4}-\d{2}-\d{2}", "DATE", s)
+            s = re.sub(r"\d+", "N", s)
+            s = re.sub(r"\b[A-Z][a-z]+\b", "X", s).lower().strip()
+            if len(s) >= 25:
+                out.add(s)
+    return out
+
+
+def replay_gold(row):
+    """Execute the stored gold trajectory in the simulator; it must reproduce expected_mutations exactly."""
+    sys.path.insert(0, str(ROOT / "src"))
+    from mock_tools import IAMEnv, grade
+    env = IAMEnv(row["state"])
+    for m in row.get("gold", []):
+        for c in m.get("tool_calls", []):
+            env.call(c["function"]["name"], c["function"]["arguments"])
+    g = grade(row["expected_mutations"], env, row["gold"][-1]["content"], row["expected_final"])
+    return g["pass"] and not g["unsafe"] and not g["tool_errors"]
+
+
 def check_data():
-    validator = load_schema_validator()
+    sys.path.insert(0, str(ROOT / "src"))
+    try:
+        from mock_tools import TOOL_SPECS
+    except Exception as e:  # missing deps or broken config
+        warnings.append(f"cannot import src/mock_tools.py ({e}); skipping data checks")
+        return
     splits = {}
-    for name in ["train", "validation", "test"]:
+    for name in ["train", "validation", "test", "pilot"]:
         path = f"data/{name}.jsonl"
         if not (ROOT / path).exists():
             continue
@@ -136,23 +163,19 @@ def check_data():
             if not isinstance(msgs, list) or not msgs:
                 errors.append(f"{path}:{i} missing 'messages' list")
                 continue
-            gold = [m for m in msgs if m.get("role") == "assistant"]
-            if not gold:
-                errors.append(f"{path}:{i} has no assistant (gold) message")
-                continue
-            try:
-                out = json.loads(gold[-1]["content"])
-            except (json.JSONDecodeError, KeyError, TypeError):
-                errors.append(f"{path}:{i} assistant content is not valid JSON")
-                continue
-            if validator:
-                for err in validator.iter_errors(out):
-                    errors.append(f"{path}:{i} gold output violates schema: {err.message}")
-                    break
-            if name == "test":
-                for k in ("id", "category"):
-                    if k not in row:
-                        errors.append(f"{path}:{i} test rows need '{k}'")
+            if name in ("train", "validation"):
+                if not any(m.get("role") == "assistant" for m in msgs):
+                    errors.append(f"{path}:{i} has no assistant (gold) turn")
+                for m in msgs:
+                    for c in m.get("tool_calls", []):
+                        if c["function"]["name"] not in TOOL_SPECS:
+                            errors.append(f"{path}:{i} gold calls unknown tool {c['function']['name']}")
+            else:
+                missing = [k for k in ("id", "family_id", "category", "state", "expected_mutations", "expected_final") if k not in row]
+                if missing:
+                    errors.append(f"{path}:{i} eval rows need {missing}")
+                elif not replay_gold(row):
+                    errors.append(f"{path}:{i} gold trajectory does not reproduce expected_mutations")
 
     # Leakage: identical request text across splits
     if "test" in splits:
@@ -161,6 +184,15 @@ def check_data():
             dup = sum(1 for r in splits.get(name, []) if user_text(r) in test_texts)
             if dup:
                 errors.append(f"LEAKAGE: {dup} {name} rows have the exact same request text as a test row")
+
+    # Leakage: test sentences whose wording template (names, ids, numbers masked) also appears in train
+    if "test" in splits and "train" in splits:
+        train_sk = {s for r in splits["train"] for s in skeletons(user_text_raw(r))}
+        test_sk = [s for r in splits["test"] for s in skeletons(user_text_raw(r))]
+        shared = [s for s in test_sk if s in train_sk]
+        if shared:
+            errors.append(f"LEAKAGE: {len(shared)}/{len(test_sk)} test sentences reuse a train wording template, "
+                          f"e.g. '{shared[0]}'")
 
     # Leakage: same ticket family in multiple splits (via seed_scenarios.jsonl)
     seeds = ROOT / "data/seed_scenarios.jsonl"

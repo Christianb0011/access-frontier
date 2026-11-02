@@ -3,11 +3,11 @@
     "type": "function",
     "function": {
       "name": "lookup_user",
-      "description": "Look up an Acme employee or account by name, email or employee ID.",
+      "description": "Search Acme employees by name, email or user_id. Returns all matching users with user_id, department, status and manager_id.",
       "parameters": {
         "type": "object",
         "properties": {
-          "query": {"type": "string", "description": "Name, email or employee ID"}
+          "query": {"type": "string", "description": "Full or partial name, email, or user_id"}
         },
         "required": ["query"]
       }
@@ -16,18 +16,32 @@
   {
     "type": "function",
     "function": {
+      "name": "lookup_approval",
+      "description": "Fetch an approval record (e.g. APP-1234, DO-1234, SEC-1234, TERM-1234, NH-1234) with its type, status and what it covers.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "approval_id": {"type": "string"}
+        },
+        "required": ["approval_id"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
       "name": "grant_access",
-      "description": "Grant a user access to a resource with a given role.",
+      "description": "Grant a user a role on a resource from the Acme resource catalog.",
       "parameters": {
         "type": "object",
         "properties": {
           "user_id": {"type": "string"},
-          "resource": {"type": "string", "description": "e.g. finance_shared_drive, hr_system, prod_admin, mailbox:<name>"},
+          "resource": {"type": "string", "description": "Resource id from the catalog, e.g. finance_share, github, salesforce_admin"},
           "role": {"type": "string", "enum": ["read", "write", "admin"]},
-          "duration_days": {"type": "integer", "description": "Omit for permanent access. Privileged access max 30 (P2)."},
-          "approval_ids": {"type": "array", "items": {"type": "string"}, "description": "Ticket/approval IDs, e.g. APP-123"}
+          "approval_ids": {"type": "array", "items": {"type": "string"}, "description": "All approval ids that authorize this grant"},
+          "duration_days": {"type": "integer", "description": "Access duration in days. Omit for standing (non-expiring) access."}
         },
-        "required": ["user_id", "resource", "role"]
+        "required": ["user_id", "resource", "role", "approval_ids"]
       }
     }
   },
@@ -49,15 +63,18 @@
   {
     "type": "function",
     "function": {
-      "name": "disable_user",
-      "description": "Disable an employee account. Requires a verified HR termination ticket (P3).",
+      "name": "create_user_account",
+      "description": "Create an account for a new internal employee.",
       "parameters": {
         "type": "object",
         "properties": {
-          "user_id": {"type": "string"},
-          "hr_ticket_id": {"type": "string", "description": "e.g. HR-456"}
+          "first_name": {"type": "string"},
+          "last_name": {"type": "string"},
+          "department": {"type": "string"},
+          "manager_id": {"type": "string", "description": "user_id of the new employee's manager"},
+          "approval_id": {"type": "string", "description": "The NH- new-hire approval"}
         },
-        "required": ["user_id", "hr_ticket_id"]
+        "required": ["first_name", "last_name", "department", "manager_id", "approval_id"]
       }
     }
   },
@@ -65,14 +82,14 @@
     "type": "function",
     "function": {
       "name": "create_guest_account",
-      "description": "Create a temporary guest account. Requires a sponsor and an expiry date (P4).",
+      "description": "Create a temporary account for an external person (contractor, vendor, partner).",
       "parameters": {
         "type": "object",
         "properties": {
           "guest_name": {"type": "string"},
-          "guest_email": {"type": "string"},
-          "sponsor_id": {"type": "string"},
-          "expiry_date": {"type": "string", "description": "ISO date YYYY-MM-DD"}
+          "sponsor_id": {"type": "string", "description": "user_id of the Acme employee sponsoring the guest"},
+          "expiry_date": {"type": "string", "description": "YYYY-MM-DD"},
+          "guest_email": {"type": "string"}
         },
         "required": ["guest_name", "sponsor_id", "expiry_date"]
       }
@@ -81,14 +98,29 @@
   {
     "type": "function",
     "function": {
-      "name": "create_security_incident",
-      "description": "Open a security incident, e.g. for a suspected account compromise (P5).",
+      "name": "disable_user",
+      "description": "Disable an employee's account.",
       "parameters": {
         "type": "object",
         "properties": {
           "user_id": {"type": "string"},
+          "hr_ticket_id": {"type": "string", "description": "The TERM- HR termination approval"}
+        },
+        "required": ["user_id", "hr_ticket_id"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "create_security_incident",
+      "description": "Open a security incident.",
+      "parameters": {
+        "type": "object",
+        "properties": {
           "summary": {"type": "string"},
-          "severity": {"type": "string", "enum": ["low", "medium", "high"]}
+          "severity": {"type": "string", "enum": ["low", "high"]},
+          "user_id": {"type": "string", "description": "Affected user, if any"}
         },
         "required": ["summary", "severity"]
       }
