@@ -28,7 +28,7 @@ SPLIT_GROUP = {"train": "train", "train_hard": "train", "validation": "validatio
 ALLOWED_TOP = {
     "README.md", "TASKS.md", "app.py", "requirements.txt", ".env.example", ".gitignore",
     ".gitattributes", "frozen.lock.json", ".claude", ".githooks", "scripts", "config",
-    "data", "src", "results", "notebooks", "slides",
+    "data", "src", "results", "notebooks", "slides", "docs",
 }
 SECRET_PATTERNS = [
     re.compile(r"fw_[A-Za-z0-9]{20,}"),                # Fireworks API key
