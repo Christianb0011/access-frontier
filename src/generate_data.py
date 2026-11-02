@@ -669,13 +669,13 @@ def b_multi_step(w, rng):
         aids = approvals_for(w, uid, res, role)
         refs = " and ".join(aids)
         call = ("grant_access", {"user_id": uid, "resource": res, "role": role, "approval_ids": aids})
-        return w.say("multi_grant", refs=refs), task([[LA(a) for a in aids], [call]], "act",
+        return w.say("multi_grant", refs=refs), task([[LA(a) for a in aids], [LU(uid)], [call]], "act",
                                                      f"Processed {refs}.", "grant_share" if res in SHARES else None)
     if kind == "disable":
         uid = w.user()
         term = w.approval("hr_termination", user_id=uid)
         return w.say("multi_disable", term=term), task(
-            [[LA(term)], [("disable_user", {"user_id": uid, "hr_ticket_id": term})]], "act",
+            [[LA(term)], [LU(uid)], [("disable_user", {"user_id": uid, "hr_ticket_id": term})]], "act",
             f"Disabled {w.name(uid)} per {term}.", "disable")
     mgr = w.user()
     f, l = w.person()
@@ -683,7 +683,7 @@ def b_multi_step(w, rng):
     nh = w.approval("new_hire", first_name=f, last_name=l, department=dept, manager_id=mgr)
     call = ("create_user_account", {"first_name": f, "last_name": l, "department": dept, "manager_id": mgr,
                                     "approval_id": nh})
-    return w.say("multi_new_hire", nh=nh), task([[LA(nh)], [call]], "act", f"Created account for {f} {l}.",
+    return w.say("multi_new_hire", nh=nh), task([[LA(nh)], [LU(mgr)], [call]], "act", f"Created account for {f} {l}.",
                                                 "create_user")
 
 
@@ -1046,6 +1046,10 @@ def generate(split, buckets, seed_split, pool, rng_seed, seeds):
 
 
 def main():
+    out_dir = DATA
+    if "--out" in sys.argv:  # regenerate into a scratch directory; never touches frozen files in data/
+        out_dir = Path(sys.argv[sys.argv.index("--out") + 1])
+        out_dir.mkdir(parents=True, exist_ok=True)
     seeds = load_seeds()
     print("seed families per split:", {s: {k: len({r['family_id'] for r in v}) for k, v in p.items()}
                                        for s, p in seeds.items()})
@@ -1057,13 +1061,26 @@ def main():
               f" | rejected {dict(rejected) or 0}")
 
     def dump(path, rows):
-        with (DATA / path).open("w", encoding="utf-8") as f:
+        with (out_dir / path).open("w", encoding="utf-8") as f:
             for r in rows:
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
 
     # Train/validation: Fireworks SFT format (tools + full gold conversation)
+    # Training rows: exact duplicates removed within a split; validation rows that also appear in train removed
+    sft, seen = {}, set()
+    for split in ("train", "train_hard", "validation"):
+        rows, kept = [], 0
+        for r in all_rows[split]:
+            row = {"tools": TOOLS, "messages": r["messages"] + r["gold"]}
+            k = json.dumps(row["messages"], sort_keys=True)
+            if k in seen:
+                continue
+            seen.add(k)
+            rows.append(row)
+        print(f"{split:<11} {len(all_rows[split])} generated -> {len(rows)} after duplicate removal")
+        sft[split] = rows
     for split in ("train", "validation", "train_hard"):
-        dump(f"{split}.jsonl", [{"tools": TOOLS, "messages": r["messages"] + r["gold"]} for r in all_rows[split]])
+        dump(f"{split}.jsonl", sft[split])
     # Test/pilot: prompt + simulator state + expected final state and final reply (gold kept for debugging)
     for split in ("test", "pilot", "test_hard"):
         dump(f"{split}.jsonl", all_rows[split])
