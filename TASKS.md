@@ -46,6 +46,7 @@ Run a frontier model on `data/pilot.jsonl` (20 hard cases):
 - [x] Package Inspect IAM benchmark, hybrid scoring, tests and pilot reports in [nanda-eval/](nanda-eval/README.md).
 - [x] Run Kimi K3 through Inspect on all 325 current evaluation cases and audit unchanged data: [96% standard, 98.1% hard, 100% pilot; findings](nanda-eval/reports/full-frontier-evaluation.md).
 - [x] Add a separate [v2 benchmark](nanda-eval/V2_SPEC.md): 80 evaluation cases, 20 development cases, independent policy oracle, behavioral tests and blind review pack. Original data preserved.
+- [x] Run all 100 v2 cases on paid Kimi K3 and complete supplemental blind AI label review: [results and limitations](nanda-eval/reports/v2-results.md).
 - [ ] Complete independent human label review and communication-judge calibration for v2 before final benchmark claims.
 - [ ] Confirm which models are in the event account: `qwen3-8b`, Nemotron 3 Super, and **the strongest frontier model we're allowed to use** (ideally 2)
 - [x] `src/mock_tools.py`: IAM simulator + policy checker + state-based grading (built with the generator)
