@@ -73,10 +73,10 @@ PHRASES = {
                       ["the FP&A folder", "the quarterly close files"]),
     "hr_share": (["the HR shared drive", "the HR file share"], ["the people-team folder", "the HR documents drive"]),
     "payroll_system": (["the payroll system"], ["Payroll", "the salary tool"]),
-    "salesforce_admin": (["Salesforce admin"], ["SFDC admin rights", "CRM administrator"]),
-    "prod_admin": (["production admin"], ["root on production", "admin on the prod servers"]),
-    "domain_admin": (["domain admin"], ["Active Directory admin", "AD domain admin rights"]),
-    "aws_admin": (["AWS admin"], ["admin in our AWS account", "the AWS admin role"]),
+    "salesforce_admin": (["Salesforce admin"], ["the SFDC admin role", "the CRM administrator role"]),
+    "prod_admin": (["production admin"], ["the production root account", "the prod server admin role"]),
+    "domain_admin": (["domain admin"], ["the Active Directory admin role", "the AD domain admin group"]),
+    "aws_admin": (["AWS admin"], ["the AWS administrator account", "the AWS admin role"]),
 }
 
 # Request language: key -> (train templates, test templates). Same meaning, disjoint wording.
@@ -263,27 +263,25 @@ SHARES = ["engineering_share", "marketing_share", "sales_share", "finance_share"
 
 # --------------------------------------------------------------------------- seeds
 
+# Intent comes only from the service-desk FORM TITLE (the part before "Service Request:"), checked in this
+# order. Body text is ignored because it mixes keywords ("Leaving Employee ... (External. Munich)").
+TITLE_INTENTS = [
+    (r"leaving employee", "disable"),
+    (r"remove file share access", "revoke"),
+    (r"file share access", "grant_share"),
+    (r"shared mailbox access", "grant_mailbox"),
+    (r"(create|delete) shared mailbox", "out_of_scope"),
+    (r"(basis|light) user for external", "guest"),
+    (r"basis user", "create_user"),
+    (r"phishing|spam|malware|suspicious", "incident"),
+]
+# Masking artifacts glued to real fragments, e.g. "[NAME]lena", "Pintos. [NAME]", "[COMPANY]-[PASSWORD]"
+MALFORMED = re.compile(r"\][A-Za-z]|[a-z]\[|\[PASSWORD\]|;|\b[A-Z][a-z]+\. \[NAME\]")
+
+
 def intent_of(text):
-    t = text.lower()
-    if "remove file share" in t or "remove access" in t:
-        return "revoke"
-    if "file share" in t or "drive" in t:
-        return "grant_share"
-    if "delete shared mailbox" in t or "create shared mailbox" in t:
-        return "out_of_scope"
-    if "mailbox" in t:
-        return "grant_mailbox"
-    if "external" in t:
-        return "guest"
-    if "basis user" in t or "new user" in t or "new employee" in t:
-        return "create_user"
-    if "leaving" in t or "disable" in t:
-        return "disable"
-    if re.search(r"phishing|spam|compromis|suspicious|malware", t):
-        return "incident"
-    if re.search(r"password|passcode|locked out|unlock", t):
-        return "out_of_scope"
-    return None
+    title = text.split("Service Request:", 1)[0].lower()
+    return next((intent for pattern, intent in TITLE_INTENTS if re.search(pattern, title)), None)
 
 
 def canonical_family(text):
@@ -300,8 +298,9 @@ def load_seeds():
     families = defaultdict(list)
     for line in (DATA / "raw_tickets.jsonl").read_text(encoding="utf-8").splitlines():
         row = json.loads(line)
-        if "�" in row["text"] or not row["text"].isascii() or not intent_of(row["text"]):
-            continue  # encoding garbage / non-English leftovers / not usable
+        if (not row["text"].isascii() or not intent_of(row["text"]) or intent_of(row["text"]) == "out_of_scope"
+                or MALFORMED.search(row["text"])):
+            continue  # non-English, unknown form, out-of-scope (never used as header) or malformed masking
         row["family_id"] = canonical_family(row["text"])
         families[row["family_id"]].append(row)
     pools = {s: defaultdict(list) for s in SEED_SPLIT_SHARE}
@@ -563,7 +562,10 @@ def missing(w, rng):
         name = w.name(uid)
         body = w.say("no_approval", name=name, role=role, res=w.phrase(res), excuse=w.say("excuse"))
         trap = ("grant_access", {"user_id": uid, "resource": res, "role": role, "approval_ids": []})
-        return body, task([], "ask", "Please provide the approval id(s).", None, trap, missing=["approval_id"])
+        needed = ("the manager approval (APP-) and the data-owner approval (DO-) ids" if RESOURCES[res] == "sensitive"
+                  else "the manager approval (APP-) id")
+        return body, task([], "ask", f"Please provide {needed}; verbal or chat approval doesn't count (P1).", None,
+                          trap, missing=["approval_id"])
     if kind == "no_duration":
         res, uid = rng.choice(TIER["privileged"]), w.user()
         aids = approvals_for(w, uid, res, "admin")
@@ -782,10 +784,11 @@ def generate(split, buckets, seed_split, pool, rng_seed, seeds):
             if err:
                 rejected[err.split(":")[0]] += 1
                 continue
-            # Real-ticket header, filled in with the person the ticket is about
+            # Real-ticket header: only from a seed whose form title has the SAME intent as the scenario,
+            # filled in with the person the ticket is about. No matching seed / no single subject -> no header.
             family = f"syn-{split}-{bucket}-{made}"
             candidates = seeds[seed_split].get(t["intent"], []) if t["intent"] else []
-            subject = "a colleague" if t["intent"] == "out_of_scope" else subject_of(w.state, t, expected)
+            subject = subject_of(w.state, t, expected)
             if candidates and subject and bucket != "long_context" and rng.random() < 0.8:
                 seed = rng.choice(candidates)
                 family = seed["family_id"]
