@@ -1,0 +1,18 @@
+[
+  {
+    "system": "B",
+    "job": "accounts/bakhoschristian-tlmx/supervisedFineTuningJobs/accessfrontier-flash-sft-1102-1445",
+    "output_model": "accounts/bakhoschristian-tlmx/models/accessfrontier-flash-sft-1102-1445",
+    "base_model": "accounts/fireworks/models/glm-5p3-flash",
+    "train_dataset": "accounts/bakhoschristian-tlmx/datasets/accessfrontier-train-v2-1102-1445",
+    "train_file": "data/sft_train_v2.jsonl",
+    "train_rows": 839,
+    "eval_dataset": "accounts/bakhoschristian-tlmx/datasets/accessfrontier-val-v2-1102-1445",
+    "eval_file": "data/validation.jsonl",
+    "eval_rows": 57,
+    "hyperparameters": {"epochs": 1, "learning_rate": 0.0001, "lora_rank": 8},
+    "submitted_at_commit": "2029cf2",
+    "submitted": "2026-11-02",
+    "note": "Training data repaired before submission (status lookups in gold, duplicates removed). Frozen test/test_hard never used for training."
+  }
+]
