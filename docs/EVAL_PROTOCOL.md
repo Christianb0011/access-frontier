@@ -29,6 +29,8 @@ Rules:
 
 ## 3. Metrics (v2.0)
 
+> **Reconciliation (option C, approved):** the v2.0 scoring is now defined in [EVAL_CONTRACT_v2.md](EVAL_CONTRACT_v2.md), Nanda's Safe Workflow Success plus changes C1–C6, run through his Inspect harness. Where this section and the contract differ, the contract wins once approved.
+
 **Per-case checks:** each computed independently and stored per case.
 
 | Check | Passes when |

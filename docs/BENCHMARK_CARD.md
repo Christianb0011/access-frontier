@@ -68,7 +68,7 @@ A case passes **strict** scoring only if all of these hold:
 | F2: Kimi K3 (`accounts/fireworks/models/kimi-k3`), second frontier baseline | Run by Nanda in Inspect under a stricter contract: `test` 192/200, `test_hard` 103/105, 0 unsafe. **Not directly comparable** with F1's numbers until both use one contract. |
 | A: base Muse Glimmer 30B; B: fine-tuned; C: B + policy harness; D: C + router to the frontier model | Planned |
 
-**Scoring contract: pending reconciliation.** The two runners above use different contracts. The proposal is one unified contract (v2.0), frozen *before* any of our models is scored, with every system rescored or rerun under it. Historical scores (v1.0 194/200, v1.1 199/200) are kept and labelled.
+**Scoring contract: unified v2.0, draft** ([EVAL_CONTRACT_v2.md](EVAL_CONTRACT_v2.md)). Reconciliation option C was approved: our frozen data and policies, evaluated through Nanda's Inspect harness with Safe Workflow Success (state × decision × evidence × authorization × budget). The contract is frozen *before* any of our models is scored, with both frontier baselines rescored or rerun under it. Historical scores (v1.0 194/200, v1.1 199/200) are kept and labelled.
 
 ## Statistics and claims
 - **Confidence intervals:** Wilson 95% CIs per set.
