@@ -47,9 +47,12 @@ and the 30B Coder variant all returned HTTP 404 with `NOT_FOUND`. The account's
 deployment list was empty. No paid dedicated deployment was created.
 
 Qwen3 8B is installed locally through Ollama as an 8.2B `Q4_K_M` model, with tool
-support. A five-case development smoke run is in progress; no complete score or
-Kimi comparison is claimed yet. A local hardware/quantization result must be labelled
-separately from hosted inference.
+support. The five-case development smoke completed at **1/5**, with four unnecessary asks/refusals,
+zero unsafe executions, and median latency 150.95 seconds. However, the local server
+was configured with only **4,096 context tokens**, insufficient for the full prompt
+and growing tool history. This is a serving-configuration finding, **not a valid paired
+model-quality comparison with Kimi**. A proper 8B evaluation needs adequate serving
+context and a complete matched evaluation. No full-suite Qwen 8B score is claimed.
 
 The 30B local model is approximately 19 GB according to
 [Ollama's model page](https://ollama.com/library/qwen3:30b). Free disk space was
