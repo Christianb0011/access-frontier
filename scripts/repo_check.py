@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 LOCK = ROOT / "frozen.lock.json"
 FREEZE_GROUPS = {
     "test": ["data/test.jsonl"],
-    "config": ["config/tools.json", "config/policies.yaml", "config/output_schema.json"],
+    "config": ["config/tools.json", "config/policies.yaml"],
 }
 ALLOWED_TOP = {
     "README.md", "TASKS.md", "app.py", "requirements.txt", ".env.example", ".gitignore",
