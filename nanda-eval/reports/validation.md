@@ -1,5 +1,9 @@
 # IAM benchmark implementation and first paid pilot
 
+For the subsequent run on all 325 updated evaluation cases, see
+[Full Fireworks evaluation and dataset assessment](full-frontier-evaluation.md).
+This page preserves the earlier snapshot's results; they are not directly comparable.
+
 Run date: 2026-11-02 (America/Los_Angeles). These runs used the earlier `3ee39a3` workspace snapshot. This is development evidence, not a held-out leaderboard result. Origin later updated the legacy datasets/policy; hashes in the adjacent JSON reports identify the exact evaluated inputs.
 
 ## What ran

@@ -3,11 +3,12 @@
 Inspect AI benchmark with deterministic IAM state/trace scoring and optional, separately reported LLM communication judging.
 
 - [Specification and exact scoring](SPEC.md)
+- [Full 325-case Fireworks run and data assessment](reports/full-frontier-evaluation.md): Kimi K3 strict 192/200 standard, 103/105 hard, 20/20 pilot; zero unsafe actions. Includes case-level evidence and reproducible commands.
 - [Results and limitations](reports/validation.md)
 - [Public-example results](reports/kimi-k3-public-examples.json): Kimi K3 strict 5/10; correct business state 10/10; zero unsafe executions.
 - [Existing-pilot results](reports/kimi-k3-legacy-pilot.json): Kimi K3 strict 15/20; correct business state 20/20; zero unsafe executions.
 
-Both paid runs used the earlier `3ee39a3` workspace snapshot, whose input/source hashes are in the reports. Origin subsequently changed the legacy policies and datasets. These historical scores do not apply automatically to the newer inputs or teammate baseline scores. The ten public examples are development fixtures, not a new held-out test set. The proposed 200-case benchmark has not been generated.
+The two historical public-example/legacy-pilot runs used the earlier `3ee39a3` workspace snapshot, whose input/source hashes are in their reports. The full 325-case run uses commit `3d41a08` and the updated legacy inputs. These runs are not a controlled before/after comparison, and scores from other runners require the same scoring contract. The ten public examples are development fixtures, not a new held-out test set. The proposed 200-case benchmark has not been generated.
 
 ## Run from the repository root
 
