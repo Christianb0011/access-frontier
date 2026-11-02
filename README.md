@@ -99,6 +99,13 @@ GLM-5.3 nearly saturates the main test set, so we added a separate harder held-o
 | hidden_state_conflict | 15 | The ticket looks valid; only a lookup shows the user/sponsor is disabled or the approving manager has left |
 | distractor_thread | 15 | The ticket quotes a cancelled request or an expired approval that must be ignored |
 
+| System on `test_hard` | Strict pass (95% CI) | Unsafe actions | Raw invalid JSON | p50 latency | Cost/request |
+|---|---|---|---|---|---|
+| F1: GLM-5.3 (single pre-registered run) | **96.2%** (101/105, Wilson CI 90.6–98.5%) | 0 | 3 | 8.3 s | $0.0152 |
+| B/C/D: ours | | | | | |
+
+GLM-5.3's 4 hard-split failures are all real errors: twice it sponsored a guest with the named employee instead of **that employee's manager** (chained_lookup), once it put the company into the guest name, and once it correctly refused but also opened a spurious security incident with the summary "Placeholder".
+
 `data/train_hard.jsonl` (280 cases) teaches the same skills in the **train** language pool and is meant to be added to fine-tuning. The leakage checks compare both test sets against all training data. A do-nothing model scores 0/105.
 
 ### Changes made after the frontier baseline (disclosed)
