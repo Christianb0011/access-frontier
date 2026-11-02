@@ -1,0 +1,97 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "lookup_user",
+      "description": "Look up an Acme employee or account by name, email or employee ID.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {"type": "string", "description": "Name, email or employee ID"}
+        },
+        "required": ["query"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "grant_access",
+      "description": "Grant a user access to a resource with a given role.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "user_id": {"type": "string"},
+          "resource": {"type": "string", "description": "e.g. finance_shared_drive, hr_system, prod_admin, mailbox:<name>"},
+          "role": {"type": "string", "enum": ["read", "write", "admin"]},
+          "duration_days": {"type": "integer", "description": "Omit for permanent access. Privileged access max 30 (P2)."},
+          "approval_ids": {"type": "array", "items": {"type": "string"}, "description": "Ticket/approval IDs, e.g. APP-123"}
+        },
+        "required": ["user_id", "resource", "role"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "revoke_access",
+      "description": "Remove a user's access to a resource.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "user_id": {"type": "string"},
+          "resource": {"type": "string"}
+        },
+        "required": ["user_id", "resource"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "disable_user",
+      "description": "Disable an employee account. Requires a verified HR termination ticket (P3).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "user_id": {"type": "string"},
+          "hr_ticket_id": {"type": "string", "description": "e.g. HR-456"}
+        },
+        "required": ["user_id", "hr_ticket_id"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "create_guest_account",
+      "description": "Create a temporary guest account. Requires a sponsor and an expiry date (P4).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "guest_name": {"type": "string"},
+          "guest_email": {"type": "string"},
+          "sponsor_id": {"type": "string"},
+          "expiry_date": {"type": "string", "description": "ISO date YYYY-MM-DD"}
+        },
+        "required": ["guest_name", "sponsor_id", "expiry_date"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "create_security_incident",
+      "description": "Open a security incident, e.g. for a suspected account compromise (P5).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "user_id": {"type": "string"},
+          "summary": {"type": "string"},
+          "severity": {"type": "string", "enum": ["low", "medium", "high"]}
+        },
+        "required": ["summary", "severity"]
+      }
+    }
+  }
+]

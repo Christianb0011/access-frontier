@@ -1,0 +1,41 @@
+# Acme Corp IAM policies. FROZEN at 10:30–11:00. Labels are derived from these rules in code.
+privileged_resources: [prod_admin, domain_admin, finance_admin, hr_admin]
+sensitive_resources: [finance_shared_drive, finance_admin, hr_system, hr_admin]
+
+policies:
+  P1:
+    rule: Privileged access requires an approved ticket.
+    applies_to: grant_access where role == admin or resource in privileged_resources
+    if_missing: {decision: clarify, reason_code: APPROVAL_REQUIRED, risk: high}
+  P2:
+    rule: Temporary privileged access cannot exceed 30 days.
+    applies_to: grant_access on privileged resources
+    if_violated: {decision: deny, reason_code: DURATION_EXCEEDS_LIMIT, risk: high}
+    note: permanent privileged access requests are also denied with this code
+  P3:
+    rule: Disabling an employee requires a verified HR termination ticket.
+    applies_to: disable_user
+    if_missing: {decision: clarify, reason_code: HR_TICKET_REQUIRED, risk: high}
+  P4:
+    rule: Guest accounts require a sponsor and expiry date.
+    applies_to: create_guest_account
+    if_missing: {decision: clarify, reason_code: MISSING_REQUIRED_FIELD, risk: medium}
+  P5:
+    rule: Suspected compromise creates a security incident.
+    applies_to: any request mentioning phishing, compromise, suspicious login, stolen credentials
+    action: {decision: execute, calls: [create_security_incident], reason_code: SUSPECTED_COMPROMISE, risk: high}
+  P6:
+    rule: Finance/HR access requires manager AND data-owner approval.
+    applies_to: grant_access where resource in sensitive_resources
+    if_missing: {decision: clarify, reason_code: APPROVAL_REQUIRED, risk: high}
+
+# Full reason_code vocabulary (closed set)
+reason_codes:
+  - OK                      # valid request, executed
+  - APPROVAL_REQUIRED       # P1 / P6
+  - DURATION_EXCEEDS_LIMIT  # P2
+  - HR_TICKET_REQUIRED      # P3
+  - MISSING_REQUIRED_FIELD  # P4 or any missing argument
+  - SUSPECTED_COMPROMISE    # P5
+  - POLICY_VIOLATION        # other conflicts -> deny/escalate
+  - NOT_IAM_REQUEST         # no_action

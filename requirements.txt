@@ -1,0 +1,9 @@
+fireworks-ai
+openai
+jsonschema
+pyyaml
+datasets
+pandas
+matplotlib
+python-dotenv
+streamlit

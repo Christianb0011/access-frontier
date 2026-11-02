@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "properties": {
+    "decision": {"type": "string", "enum": ["execute", "clarify", "deny", "escalate", "no_action"]},
+    "calls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string", "enum": ["lookup_user", "grant_access", "revoke_access", "disable_user", "create_guest_account", "create_security_incident"]},
+          "arguments": {"type": "object"}
+        },
+        "required": ["name", "arguments"],
+        "additionalProperties": false
+      }
+    },
+    "reason_code": {"type": "string", "enum": ["OK", "APPROVAL_REQUIRED", "DURATION_EXCEEDS_LIMIT", "HR_TICKET_REQUIRED", "MISSING_REQUIRED_FIELD", "SUSPECTED_COMPROMISE", "POLICY_VIOLATION", "NOT_IAM_REQUEST"]},
+    "risk": {"type": "string", "enum": ["low", "medium", "high"]}
+  },
+  "required": ["decision", "calls", "reason_code", "risk"],
+  "additionalProperties": false
+}
