@@ -97,7 +97,18 @@ results/  results.csv, pareto.png
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env    # put FIREWORKS_API_KEY in it (never commit .env)
+git config core.hooksPath .githooks   # enables the pre-commit checks (run once per clone)
 ```
+
+## Staying organized
+- In Claude Code, run **`/organize`** before every commit. It syncs, moves files to the right folders, runs the checks, ticks TASKS.md, updates the results table, then commits and pushes.
+- The pre-commit hook runs `python scripts/repo_check.py --staged` on every commit. It blocks: API keys, `.env`, files in the wrong place, invalid JSONL, gold outputs that don't match the schema, train/test leakage, and **any change to frozen files**.
+- Freeze when final: `python scripts/repo_check.py --freeze config` (11:00), then `--freeze test` (~11:30). Commit `frozen.lock.json`.
+
+## Data row formats
+- `train.jsonl` / `validation.jsonl`: `{"messages":[system, user, assistant]}` (the plain Fireworks SFT format)
+- `test.jsonl`: `{"id", "family_id", "category", "messages":[system, user, assistant(gold)]}`
+- `seed_scenarios.jsonl`: one row per scenario with `family_id` and `split`. The leakage check uses it.
 
 ## Reference links
 - xLAM 60K (format reference only): https://huggingface.co/datasets/Salesforce/xlam-function-calling-60k
