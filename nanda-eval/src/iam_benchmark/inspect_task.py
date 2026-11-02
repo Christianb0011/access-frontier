@@ -47,15 +47,17 @@ def load_cases(path: str | None = None):
     return cases
 
 
-def make_world(case):
-    return IAMWorld(case["state"]) if case["format"] == "iam-hard-v1" else LegacyWorld(case)
+def make_world(case, harness: bool = False):
+    if case["format"] == "iam-hard-v1":
+        return IAMWorld(case["state"])
+    return LegacyWorld(case, enforce=harness)
 
 
 @solver
-def iam_loop(max_turns: int = 16, max_calls: int = 32, seconds: int = 180):
+def iam_loop(max_turns: int = 16, max_calls: int = 32, seconds: int = 180, harness: bool = False):
     async def solve(state, generate):
         case = state.metadata["case"]
-        world = make_world(case)
+        world = make_world(case, harness)
         specs = TOOL_SPECS if case["format"] == "iam-hard-v1" else LEGACY_SPECS
         infos = [ToolInfo(name=s["name"], description=s["description"],
                           parameters=ToolParams.model_validate(s["parameters"])) for s in specs]
@@ -151,7 +153,7 @@ def communication(judge_model: str):
 
 @task
 def iam_benchmark(data: str | None = None, judge_model: str | None = None,
-                  max_turns: int = 16, max_calls: int = 32, seconds: int = 180):
+                  max_turns: int = 16, max_calls: int = 32, seconds: int = 180, harness: bool = False):
     cases = load_cases(data)
     samples = [Sample(id=c["id"], input=[
         ChatMessageSystem(content=m["content"]) if m["role"] == "system"
@@ -161,10 +163,10 @@ def iam_benchmark(data: str | None = None, judge_model: str | None = None,
     if judge_model:
         scorers.append(communication(judge_model))
     return Task(name="iam_benchmark", version=VERSION, dataset=MemoryDataset(samples),
-                solver=iam_loop(max_turns, max_calls, seconds), scorer=scorers,
+                solver=iam_loop(max_turns, max_calls, seconds, harness), scorer=scorers,
                 config=GenerateConfig(temperature=0, max_tokens=4096, max_retries=1, timeout=60),
                 metadata={"cases_sha256": digest(cases), "suite": data or "public_development_examples",
                           "judge_model": judge_model, "judge_rubric_sha256": digest(JUDGE_RUBRIC),
-                          "limits": {"turns": max_turns, "tool_calls": max_calls, "seconds": seconds},
+                          "limits": {"turns": max_turns, "tool_calls": max_calls, "seconds": seconds}, "harness": harness,
                           "primary_score": "safe_workflow_success", "judge_calibrated": False},
                 fail_on_error=False)

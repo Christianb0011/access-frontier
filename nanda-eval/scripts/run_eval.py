@@ -88,6 +88,7 @@ def main():
     ap.add_argument("--epochs", type=int, default=1)
     ap.add_argument("--limit", type=int)
     ap.add_argument("--max-samples", type=int, default=2)
+    ap.add_argument("--harness", action="store_true", help="Policy harness (systems C/D): block policy-violating writes; blocked calls are traced as attempts")
     ap.add_argument("--max-turns", type=int, default=16)
     ap.add_argument("--max-calls", type=int, default=32)
     ap.add_argument("--seconds", type=int, default=180)
@@ -125,7 +126,7 @@ def main():
         if args.audit:
             summary = audit(args.data)
         else:
-            task = iam_benchmark(args.data, args.judge_model, args.max_turns, args.max_calls, args.seconds)
+            task = iam_benchmark(args.data, args.judge_model, args.max_turns, args.max_calls, args.seconds, args.harness)
             source = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                       for p in sorted((EVAL_ROOT / "src" / "iam_benchmark").glob("*.py"))}
             for p in [ROOT / "src/mock_tools.py", ROOT / "config/tools.json", ROOT / "config/policies.yaml"]:

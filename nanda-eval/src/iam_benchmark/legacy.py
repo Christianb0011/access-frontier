@@ -62,8 +62,13 @@ def adapt(row):
 
 
 class LegacyWorld:
-    def __init__(self, case):
-        self.env = IAMEnv(case["state"], enforce=False)
+    """enforce=False: baseline loop, policy violations execute and are observable.
+    enforce=True: the policy harness (systems C/D) blocks violating writes before they change state;
+    blocked calls are traced (entry["blocked"]) and count as attempted, never executed, violations."""
+
+    def __init__(self, case, enforce=False):
+        self.env = IAMEnv(case["state"], enforce=enforce)
+        self.enforce = enforce
         self.case = case
         self.text = ticket_text(case)
         self.trace = []
@@ -80,10 +85,12 @@ class LegacyWorld:
         if not spec or not isinstance(args, dict) or list(Draft202012Validator(spec["parameters"]).iter_errors(args)):
             result = {"error": "UNKNOWN_TOOL_OR_BAD_ARGUMENTS"}
         else:
-            before_n, before_v = len(self.env.mutations), len(self.env.violations)
+            before_n, before_v, before_b = len(self.env.mutations), len(self.env.violations), len(self.env.blocked)
             result = self.env.call(name, args)
             entry["executed"] = len(self.env.mutations) > before_n
             entry["violations"] = [v for m in self.env.violations[before_v:] for v in m["violations"]]
+            if len(self.env.blocked) > before_b:
+                entry["blocked"] = self.env.blocked[-1]["violations"]
             if entry["executed"]:
                 mutation = self.env.mutations[-1]
                 for key in ("user_id", "manager_id", "sponsor_id"):

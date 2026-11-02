@@ -23,12 +23,12 @@ from iam_benchmark.records import write_results  # noqa: E402
 LIMIT_STOPS = {"max_turns", "length"}
 
 
-def rescore(pred_rows, data_rows):
+def rescore(pred_rows, data_rows, harness=False):
     cases = {r["id"]: adapt(r) for r in data_rows}
     raw, scores, lat, infra = [], [], [], 0
     for p in pred_rows:
         case = cases[p["id"]]
-        world = LegacyWorld(case)
+        world = LegacyWorld(case, enforce=harness)
         for c in p["calls"]:
             args = c["arguments"]
             if isinstance(args, str):
@@ -56,12 +56,13 @@ def main():
     ap.add_argument("predictions")
     ap.add_argument("--system", required=True, help="new system name, e.g. F1_glm5p3_offline")
     ap.add_argument("--data", help="defaults to the data path recorded in the predictions")
+    ap.add_argument("--harness", action="store_true", help="predictions were produced with the policy harness on")
     args = ap.parse_args()
     preds = [json.loads(l) for l in (ROOT / args.predictions).read_text(encoding="utf-8").splitlines() if l.strip()]
     data_path = ROOT / (args.data or preds[0]["data"])
     data = [json.loads(l) for l in data_path.read_text(encoding="utf-8").splitlines() if l.strip()]
     split = data_path.stem
-    raw, scores, lat, infra = rescore(preds, data)
+    raw, scores, lat, infra = rescore(preds, data, args.harness)
     row, raw_path, score_path = write_results(ROOT, args.system, split, data_path, preds[0].get("model"),
                                               "offline_rescore:" + args.predictions, raw, scores, lat, infra)
     print(json.dumps(row, indent=2))

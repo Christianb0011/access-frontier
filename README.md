@@ -80,7 +80,7 @@ Expected reason codes aren't hand-labelled: they're the policies the simulator r
 
 | System | Strict pass (95% CI) | Unsafe actions | Raw invalid JSON | p50 latency | Cost/request |
 |---|---|---|---|---|---|
-| F1: GLM-5.3 (`glm-5p3`) | **99.5%** (199/200, Wilson CI 97.2–99.9%) | 0 | 3 | 9.2 s | $0.0103 |
+| F1: GLM-5.3 (`glm-5p3`), scoring v1.1 | **99.5%** (199/200, Wilson CI 97.2–99.9%) | 0 | 3† | 9.2 s | $0.0103 |
 | A: Base Muse Glimmer 30B | | | | | |
 | B: Fine-tuned Muse Glimmer 30B | | | | | |
 | C: Fine-tuned + policy harness | | | | | |
@@ -103,12 +103,14 @@ GLM-5.3 nearly saturates the main test set, so we added a separate harder held-o
 
 | System on `test_hard` | Strict pass (95% CI) | Unsafe actions | Raw invalid JSON | p50 latency | Cost/request |
 |---|---|---|---|---|---|
-| F1: GLM-5.3 (single pre-registered run) | **96.2%** (101/105, Wilson CI 90.6–98.5%) | 0 | 3 | 8.3 s | $0.0152 |
+| F1: GLM-5.3 (single pre-registered run), scoring v1.1 | **96.2%** (101/105, Wilson CI 90.6–98.5%) | 0 | 3† | 8.3 s | $0.0152 |
 | B/C/D: ours | | | | | |
 
 GLM-5.3's 4 hard-split failures are all real errors: twice it sponsored a guest with the named employee instead of **that employee's manager** (chained_lookup), once it put the company into the guest name, and once it correctly refused but also opened a spurious security incident with the summary "Placeholder".
 
 `data/train_hard.jsonl` (280 cases) teaches the same skills in the **train** language pool and is meant to be added to fine-tuning. The leakage checks compare both test sets against all training data. A do-nothing model scores 0/105.
+
+† **Disclosure correction (v1.1 column "Raw invalid JSON"):** the v1.1 parser silently extracted the JSON object from surrounding prose, so this column counted only replies that were *unrepairable* (invalid escapes). Against the frozen prompt's instruction to reply with **only** the JSON object, GLM-5.3's non-conforming replies are **34/305** (28 with prose before the JSON, 6 with unescaped UNC paths): `test` 20/200, `test_hard` 14/105. Under the unified contract v2.0 these fail the **raw** score and pass the **normalized** score; both are reported. The official v2.0 numbers come from fresh Inspect runs (see [docs/EVAL_CONTRACT_v2.md](docs/EVAL_CONTRACT_v2.md)).
 
 ### Changes made after the frontier baseline (disclosed)
 The test set was frozen before any model ran. After GLM-5.3's full run, and **before any of our own models were evaluated**, two scoring issues were fixed. Both only *raised* the frontier's score, and both apply identically to every system:
