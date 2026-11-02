@@ -1,5 +1,6 @@
 {
   "config/tools.json": "eeb64550ebab9ecb5540adf449230b8d3e17ce48430efb6cff2edf85521da524",
   "config/policies.yaml": "326c8631a32de5b5c7c860376df4e72c560a323aacb7a9dd00f1ef905b730825",
-  "data/test.jsonl": "ecac52174835a1b3636e93c7595d82ded0788f2b1fb13116c77ead467c542d8c"
+  "data/test.jsonl": "ecac52174835a1b3636e93c7595d82ded0788f2b1fb13116c77ead467c542d8c",
+  "data/test_hard.jsonl": "d9a6c22b57eef291e9e3f5b78211aa7b758a9d22de98d6e00124fbc8b77626e4"
 }

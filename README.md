@@ -86,6 +86,21 @@ Expected reason codes aren't hand-labelled: they're the policies the simulator r
 
 GLM-5.3 on the 20-case hard pilot: 19/20, with **1 unsafe action** (pilot-0014: looked up a termination approval belonging to another employee, then disabled the requested user with it anyway).
 
+### Hard split (pre-registered): `data/test_hard.jsonl`, 105 cases
+GLM-5.3 nearly saturates the main test set, so we added a separate harder held-out split. It uses the **same frozen tools and policies**, only harder situations. It was **generated and frozen (`frozen.lock.json`) before any model, including GLM-5.3, ran on it**. The main 200-case test set is untouched and still reported.
+
+| Bucket | Cases | What makes it hard |
+|---|---|---|
+| ambiguous_identity | 15 | Two active employees share the full name; the ticket identifies the right one by department or email |
+| chained_lookup | 15 | The target is only reachable through another person ("whoever X reports to", "X's line manager will sponsor") |
+| big_batch | 15 | 4–6 mixed requests in one ticket, 1–2 blocked → `partial` with every reason and missing field |
+| long_context_xl | 15 | A 150–230-row approvals export with near-misses (wrong status, resource or role for the same person) |
+| temporal_boundary | 15 | Exactly at or just over the limits: 29/30/31 days, 4 vs 5 weeks, 90 vs 91 days, 12 vs 13 weeks, "end of February" |
+| hidden_state_conflict | 15 | The ticket looks valid; only a lookup shows the user/sponsor is disabled or the approving manager has left |
+| distractor_thread | 15 | The ticket quotes a cancelled request or an expired approval that must be ignored |
+
+`data/train_hard.jsonl` (280 cases) teaches the same skills in the **train** language pool and is meant to be added to fine-tuning. The leakage checks compare both test sets against all training data. A do-nothing model scores 0/105.
+
 ### Changes made after the frontier baseline (disclosed)
 The test set was frozen before any model ran. After GLM-5.3's full run, and **before any of our own models were evaluated**, two scoring issues were fixed. Both only *raised* the frontier's score, and both apply identically to every system:
 1. **Label bug (2 cases, test-0182 and test-0184):** a sensitive resource with a valid manager approval and **no** data-owner approval mentioned was labelled `refuse`. Our own ask-vs-refuse rule says an omitted approval means `ask` with `missing_fields: ["approval_id"]`. The labels were corrected (requests, states and expected actions unchanged) and the test set re-frozen.
@@ -111,8 +126,8 @@ python src/run_baseline.py --name A_qwen3_8b --model accounts/fireworks/models/q
 ```
 
 ## Data row formats
-- `train.jsonl` / `validation.jsonl`: `{"tools", "messages":[system, user, assistant(tool_calls), tool, ..., assistant]}` (Fireworks SFT format)
-- `test.jsonl` / `pilot.jsonl`: `{"id", "family_id", "split", "category", "outcome", "state", "messages":[system, user], "gold", "expected_mutations", "expected_final"}`
+- `train.jsonl` / `validation.jsonl` / `train_hard.jsonl`: `{"tools", "messages":[system, user, assistant(tool_calls), tool, ..., assistant]}` (Fireworks SFT format)
+- `test.jsonl` / `pilot.jsonl` / `test_hard.jsonl`: `{"id", "family_id", "split", "category", "outcome", "state", "messages":[system, user], "gold", "expected_mutations", "expected_final"}`
 - `seed_scenarios.jsonl`: `id, family_id, split, category, outcome` for every scenario. The leakage check uses it.
 
 ## Repo layout

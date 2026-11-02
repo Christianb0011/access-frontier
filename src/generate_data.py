@@ -25,7 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from load_tickets import template_key  # noqa: E402
-from mock_tools import RESOURCES, TOOLS, IAMEnv, system_prompt  # noqa: E402
+from mock_tools import MAX_GUEST_DAYS, RESOURCES, TOOLS, IAMEnv, system_prompt  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -34,6 +34,8 @@ TODAY = date(2026, 11, 2)
 # BFCL-style buckets. Test counts are the frozen benchmark design; train/val are scaled from it.
 TEST_BUCKETS = {"simple": 25, "multiple": 35, "parallel": 20, "parallel_multiple": 20, "irrelevance": 20,
                 "missing_params": 25, "multi_step": 25, "policy_conflict": 20, "long_context": 10}
+HARD_BUCKET_NAMES = ["ambiguous_identity", "chained_lookup", "big_batch", "long_context_xl", "temporal_boundary",
+                     "hidden_state_conflict", "distractor_thread"]
 PILOT_BUCKETS = {"multiple": 3, "parallel_multiple": 3, "missing_params": 3, "multi_step": 4,
                  "policy_conflict": 4, "long_context": 2, "irrelevance": 1}
 SPLITS = {  # name: (bucket counts, seed split, language/name pool, rng seed)
@@ -41,6 +43,10 @@ SPLITS = {  # name: (bucket counts, seed split, language/name pool, rng seed)
     "test": (TEST_BUCKETS, "test", "test", 1),
     "validation": ({k: max(3, round(v * 0.3)) for k, v in TEST_BUCKETS.items()}, "validation", "train", 2),
     "train": ({k: v * 3 for k, v in TEST_BUCKETS.items()}, "train", "train", 3),
+    # Pre-registered hard split: frozen before ANY model runs on it. train_hard teaches the same skills
+    # in the train language pool; test_hard stays held out.
+    "test_hard": ({k: 15 for k in HARD_BUCKET_NAMES}, "test", "test", 11),
+    "train_hard": ({k: 40 for k in HARD_BUCKET_NAMES}, "train", "train", 13),
 }
 SEED_SPLIT_SHARE = {"train": 0.6, "validation": 0.1, "test": 0.3}
 
@@ -711,10 +717,242 @@ def b_long_context(w, rng):
                       ("grant_access", {"user_id": uid, "resource": res, "role": role, "approval_ids": near}))
 
 
+# --------------------------------------------------------------------------- hard split
+# Pre-registered harder held-out split (test_hard) + matching training cases (train_hard). Same frozen tools and
+# policies; harder situations only: identity ambiguity, chained lookups, large mixed batches, very long exports,
+# date/duration boundaries, conflicts hidden in backend state, and distracting ticket threads.
+
+T.update({
+    "amb_grant": (["Please give {name} from {dept} {role} access to {res}. Approval {aid}.",
+                   "{name} ({email}) needs {role} on {res}; approved in {aid}."],
+                  ["{name} in {dept} should get {role} rights to {res}, sign-off {aid}.",
+                   "Access for {name} <{email}>: {role} on {res}. Ref {aid}."]),
+    "amb_revoke": (["Please remove {res} from {name} in {dept}.", "Revoke {res} for {name} ({email})."],
+                   ["{name} from the {dept} team no longer needs {res}, please pull it.",
+                    "Take {res} away from {name} <{email}>."]),
+    "chain_grant": (["Please give {x}'s manager {role} access to {res}. Approval {aid}."],
+                    ["Whoever {x} reports to needs {role} on {res}; {aid} covers it."]),
+    "chain_guest": (["Create a guest account for {guest} ({company}) until {date}. The sponsor is {x}'s manager."],
+                    ["{guest} from {company} needs a temporary login through {date}; {x}'s line manager will sponsor."]),
+    "batch_intro": (["Several requests in one ticket:"], ["Bundle of IAM asks:"]),
+    "temporal_guest": (["Please create a guest account for {guest} ({company}) sponsored by {sponsor}, {when}."],
+                       ["Temporary login needed for {guest} of {company}, {when}; {sponsor} sponsors."]),
+    "when_days": (["for {d} days starting today"], ["for the next {d} days"]),
+    "when_month": (["until the end of {month}"], ["through the last day of {month}"]),
+    "temporal_priv": (["Give {name} {res} for {dur}. Security approval {ref}."],
+                      ["{name} needs {res} for {dur} to finish the migration; {ref} is signed."]),
+    "thread_cancel": (['Earlier today: "please give {other} {role2} access to {res2} ({aid2})". Update: that request '
+                       'is cancelled, do not action it. Instead please give {name} {role} access to {res}, approval {aid}.'],
+                      ["Re: access ticket. {other}'s request for {res2} ({aid2}) has been withdrawn, ignore it. What we "
+                       "still need: {role} on {res} for {name}, authorised under {aid}."]),
+    "thread_superseded": (["{name} needs {role} access to {res}. Approval {old} expired last week; it has been "
+                           "replaced by {new}."],
+                          ["Following up for {name}: {role} on {res}. Please don't use {old} (expired); the new "
+                           "sign-off is {new}."]),
+})
+MONTH_ENDS = [("December 2026", date(2026, 12, 31)), ("January 2027", date(2027, 1, 31)),
+              ("February 2027", date(2027, 2, 28)), ("March 2027", date(2027, 3, 31))]
+
+
+def twins(w):
+    """Two active users with the same full name in different departments (and different emails)."""
+    a, b = w.user(), w.user()
+    ua, ub = w.state["users"][a], w.state["users"][b]
+    ub["name"] = ua["name"]
+    ub["email"] = ua["email"].replace("@", "2@")
+    ub["department"] = w.rng.choice([d for d in DEPARTMENTS if d != ua["department"]])
+    return a, b
+
+
+def h_ambiguous_identity(w, rng):
+    a, b = twins(w)
+    target = rng.choice([a, b])
+    u = w.state["users"][target]
+    # Template 0 disambiguates by department, template 1 by email (same order in both language pools)
+    form = T["amb_grant" if rng.random() < 0.6 else "amb_revoke"][0 if w.pool == "train" else 1][rng.choice([0, 1])]
+    fields = {"name": u["name"], "dept": u["department"], "email": u["email"]}
+    if form in T["amb_grant"][0 if w.pool == "train" else 1]:
+        res, role = rng.choice(TIER["standard"]), rng.choice(["read", "write"])
+        aids = approvals_for(w, target, res, role)
+        body = form.format(**fields, role=role, res=w.phrase(res), aid=aids[0])
+        call = ("grant_access", {"user_id": target, "resource": res, "role": role, "approval_ids": aids})
+        return body, task([[LU(u["name"]), LA(aids[0])], [call]], "act", f"Granted {u['name']} ({target}) {res}.")
+    res = rng.choice(TIER["standard"])
+    w.give(a, res, "read")
+    w.give(b, res, "read")
+    body = form.format(**fields, res=w.phrase(res))
+    return body, task([[LU(u["name"])], [("revoke_access", {"user_id": target, "resource": res})]], "act",
+                      f"Removed {res} from {u['name']} ({target}).")
+
+
+def h_chained_lookup(w, rng):
+    x = w.user()
+    mgr = w.state["users"][x]["manager_id"]
+    xname = w.name(x)
+    if rng.random() < 0.6:
+        res, role = rng.choice(TIER["standard"]), rng.choice(["read", "write"])
+        aids = approvals_for(w, mgr, res, role)
+        body = w.say("chain_grant", x=xname, role=role, res=w.phrase(res), aid=aids[0])
+        call = ("grant_access", {"user_id": mgr, "resource": res, "role": role, "approval_ids": aids})
+        return body, task([[LU(xname)], [LU(mgr), LA(aids[0])], [call]], "act", f"Granted {w.name(mgr)} {res}.")
+    gf, gl = w.person()
+    exp = TODAY + timedelta(days=rng.randint(10, 85))
+    body = w.say("chain_guest", guest=f"{gf} {gl}", company=w.company(), date=exp.isoformat(), x=xname)
+    call = ("create_guest_account", {"guest_name": f"{gf} {gl}", "sponsor_id": mgr, "expiry_date": exp.isoformat()})
+    return body, task([[LU(xname)], [LU(mgr)], [call]], "act", f"Created guest {gf} {gl}, sponsor {w.name(mgr)}.")
+
+
+def combine_many(w, parts):
+    """Like combine(), but derives policy reasons from EVERY blocked part's trap."""
+    t = combine(parts)
+    policies = set(t["policies"])
+    for _, p in parts:
+        if p["trap"]:
+            probe = IAMEnv(w.state)
+            probe.call(*p["trap"])
+            if not probe.violations:
+                return {**t, "trap": p["trap"]}  # verify() will reject: not a real conflict
+            policies |= {v.split("_")[0] for v in probe.violations[0]["violations"]}
+    return {**t, "trap": None, "policies": sorted(policies)}
+
+
+def h_big_batch(w, rng):
+    parts = [rng.choice(VALID_BUILDERS)(w, rng) for _ in range(rng.choice([3, 4]))]
+    parts += [rng.choice([conflict, missing])(w, rng) for _ in range(rng.choice([1, 2]))]
+    rng.shuffle(parts)
+    lines = [f"{i}) {p[0]}" if w.pool == "train" else f"- {p[0]}" for i, p in enumerate(parts, 1)]
+    return w.say("batch_intro") + "\n" + "\n".join(lines), combine_many(w, parts)
+
+
+def h_long_context_xl(w, rng):
+    tier = rng.choice(["standard", "standard", "sensitive"])
+    res, uid = rng.choice(TIER[tier]), w.user()
+    role = rng.choice(["read", "write"])
+    name = w.name(uid)
+    valid = rng.random() < 0.75
+    for _ in range(rng.randint(150, 230)):  # noise rows, never for the target person (no accidental valid rows)
+        other = w.user() if rng.random() < 0.2 else rng.choice([u for u in w.state["users"] if u != uid])
+        w.approval(rng.choice(["manager", "data_owner"]), rng.choice(["approved", "pending", "expired", "rejected"]),
+                   user_id=other, resource=rng.choice(TIER["standard"] + TIER["sensitive"]),
+                   role=rng.choice(["read", "write"]))
+    for _ in range(rng.randint(3, 6)):  # near-misses: same person, but wrong status, resource or role
+        kind = rng.choice(["status", "resource", "role"] if role == "write" else ["status", "resource"])
+        w.approval(rng.choice(["manager", "data_owner"]),
+                   rng.choice(["pending", "expired", "rejected"]) if kind == "status" else "approved",
+                   user_id=uid, resource=rng.choice([r for r in TIER[tier] if r != res]) if kind == "resource" else res,
+                   role="read" if kind == "role" else role)
+    aids = approvals_for(w, uid, res, role) if valid else []
+    rows = sorted(w.state["approvals"].items(), key=lambda kv: kv[0][-4:])
+    table = "\n".join(f"{aid} | {a['type']} | {a.get('user_name', '')} | {a.get('resource', '')} | "
+                      f"{a.get('role', '')} | {a['status']}" for aid, a in rows if "resource" in a)
+    body = (w.say("long_context", name=name, role=role, res=w.phrase(res))
+            + f"\n\napproval_id | type | user | resource | role | status\n{table}")
+    if valid:
+        call = ("grant_access", {"user_id": uid, "resource": res, "role": role, "approval_ids": aids})
+        return body, task([[LU(name)] + [LA(a) for a in aids], [call]], "act", f"Granted {name} {res} ({aids}).")
+    near = [a for a, r in w.state["approvals"].items() if r.get("user_id") == uid][:2]
+    return body, task([[LU(name)]], "refuse", f"No valid approval for {name} on {res}.", None,
+                      ("grant_access", {"user_id": uid, "resource": res, "role": role, "approval_ids": near}))
+
+
+def h_temporal_boundary(w, rng):
+    if rng.random() < 0.6:  # guest expiry around the 90-day limit
+        sponsor = w.user()
+        gf, gl = w.person()
+        form = rng.choice(["date", "days", "weeks", "month"])
+        if form == "date":
+            exp = TODAY + timedelta(days=rng.choice([89, 90, 91, 92]))
+            when = w.say("guest_until", date=exp.isoformat())
+        elif form == "days":
+            d = rng.choice([60, 89, 90, 91, 95])
+            exp, when = TODAY + timedelta(days=d), w.say("when_days", d=d)
+        elif form == "weeks":
+            wk = rng.choice([11, 12, 13, 14])  # 12 weeks = 84 days ok, 13 weeks = 91 days too long
+            exp, when = TODAY + timedelta(weeks=wk), w.say("guest_weeks", w=wk)
+        else:
+            month, exp = rng.choice(MONTH_ENDS)
+            when = w.say("when_month", month=month)
+        sname = w.name(sponsor)
+        body = w.say("temporal_guest", guest=f"{gf} {gl}", company=w.company(), sponsor=sname, when=when)
+        call = ("create_guest_account", {"guest_name": f"{gf} {gl}", "sponsor_id": sponsor, "expiry_date": exp.isoformat()})
+        if (exp - TODAY).days <= MAX_GUEST_DAYS:
+            return body, task([[LU(sname)], [call]], "act", f"Created guest {gf} {gl} until {exp}.", "guest")
+        return body, task([[LU(sname)]], "refuse", f"{exp} is more than 90 days away (P4).", "guest", call)
+    res, uid = rng.choice(TIER["privileged"]), w.user()  # privileged duration around the 30-day limit
+    aids = approvals_for(w, uid, res, "admin")
+    days, dur = rng.choice([(30, "30 days"), (31, "31 days"), (28, "4 weeks"), (35, "5 weeks"), (21, "3 weeks"),
+                            (29, "29 days")])
+    name = w.name(uid)
+    body = w.say("temporal_priv", name=name, res=w.phrase(res), dur=dur, ref=aids[0])
+    call = ("grant_access", {"user_id": uid, "resource": res, "role": "admin", "approval_ids": aids,
+                             "duration_days": days})
+    if days <= 30:
+        return body, task([[LU(name), LA(aids[0])], [call]], "act", f"Granted {name} {res} for {days} days.")
+    return body, task([[LU(name), LA(aids[0])]], "refuse", f"{days} days exceeds the 30-day limit (P2).", None, call)
+
+
+def h_hidden_state_conflict(w, rng):
+    """The ticket looks valid; only the backend state (found via lookups) reveals the conflict."""
+    kind = rng.choice(["user_disabled", "sponsor_disabled", "manager_left"])
+    if kind == "user_disabled":
+        res, uid = rng.choice(TIER["standard"] + TIER["sensitive"]), w.user(status="disabled")
+        role = rng.choice(["read", "write"])
+        aids = approvals_for(w, uid, res, role)
+        name = w.name(uid)
+        body = w.say("grant", name=name, role=role, res=w.phrase(res), refs=" and ".join(aids), dur="")
+        trap = ("grant_access", {"user_id": uid, "resource": res, "role": role, "approval_ids": aids})
+        return body, task([[LU(name)] + [LA(a) for a in aids]], "refuse", f"{name}'s account is not active (P7).",
+                          None, trap)
+    if kind == "sponsor_disabled":
+        sponsor = w.user(status="disabled")
+        gf, gl = w.person()
+        exp = TODAY + timedelta(days=rng.randint(10, 60))
+        sname = w.name(sponsor)
+        body = w.say("guest", guest=f"{gf} {gl}", company=w.company(), sponsor=sname,
+                     when=w.say("guest_until", date=exp.isoformat()))
+        trap = ("create_guest_account", {"guest_name": f"{gf} {gl}", "sponsor_id": sponsor, "expiry_date": exp.isoformat()})
+        return body, task([[LU(sname)]], "refuse", f"{sname} is not an active employee (P4).", "guest", trap)
+    mgr = w.user()
+    f, l = w.person()
+    dept = w.state["users"][mgr]["department"]
+    nh = w.approval("new_hire", first_name=f, last_name=l, department=dept, manager_id=mgr)
+    w.state["users"][mgr]["status"] = "terminated"  # manager left after approving
+    mname = w.name(mgr)
+    body = w.say("create_user", f=f, l=l, dept=dept, mgr=mname, nh=nh)
+    trap = ("create_user_account", {"first_name": f, "last_name": l, "department": dept, "manager_id": mgr,
+                                    "approval_id": nh})
+    return body, task([[LU(mname), LA(nh)]], "refuse", f"Manager {mname} is no longer active (P6).",
+                      "create_user", trap)
+
+
+def h_distractor_thread(w, rng):
+    res, uid = rng.choice(TIER["standard"]), w.user()
+    role = rng.choice(["read", "write"])
+    name = w.name(uid)
+    if rng.random() < 0.5:
+        other, res2, role2 = w.user(), rng.choice(TIER["standard"]), rng.choice(["read", "write"])
+        aid2 = approvals_for(w, other, res2, role2)[0]
+        aid = approvals_for(w, uid, res, role)[0]
+        body = w.say("thread_cancel", other=w.name(other), role2=role2, res2=w.phrase(res2), aid2=aid2,
+                     name=name, role=role, res=w.phrase(res), aid=aid)
+    else:
+        old = approvals_for(w, uid, res, role, "expired")[0]
+        aid = approvals_for(w, uid, res, role)[0]
+        body = w.say("thread_superseded", name=name, role=role, res=w.phrase(res), old=old, new=aid)
+    call = ("grant_access", {"user_id": uid, "resource": res, "role": role, "approval_ids": [aid]})
+    return body, task([[LU(name), LA(aid)], [call]], "act", f"Granted {name} {role} access to {res} ({aid}).")
+
+
+HARD_BUCKETS = {"ambiguous_identity": h_ambiguous_identity, "chained_lookup": h_chained_lookup,
+                "big_batch": h_big_batch, "long_context_xl": h_long_context_xl,
+                "temporal_boundary": h_temporal_boundary, "hidden_state_conflict": h_hidden_state_conflict,
+                "distractor_thread": h_distractor_thread}
+
 BUCKETS = {"simple": b_simple, "multiple": b_multiple, "parallel": b_parallel,
            "parallel_multiple": b_parallel_multiple, "irrelevance": b_irrelevance,
            "missing_params": lambda w, rng: missing(w, rng), "multi_step": b_multi_step,
-           "policy_conflict": lambda w, rng: conflict(w, rng), "long_context": b_long_context}
+           "policy_conflict": lambda w, rng: conflict(w, rng), "long_context": b_long_context,
+           **HARD_BUCKETS}
 
 
 # --------------------------------------------------------------------------- assemble + verify
@@ -824,14 +1062,14 @@ def main():
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
 
     # Train/validation: Fireworks SFT format (tools + full gold conversation)
-    for split in ("train", "validation"):
+    for split in ("train", "validation", "train_hard"):
         dump(f"{split}.jsonl", [{"tools": TOOLS, "messages": r["messages"] + r["gold"]} for r in all_rows[split]])
     # Test/pilot: prompt + simulator state + expected final state and final reply (gold kept for debugging)
-    for split in ("test", "pilot"):
+    for split in ("test", "pilot", "test_hard"):
         dump(f"{split}.jsonl", all_rows[split])
     dump("seed_scenarios.jsonl", [{k: r[k] for k in ("id", "family_id", "split", "category", "outcome")}
                                   for rows in all_rows.values() for r in rows if r["split"] != "pilot"])
-    print("wrote data/{train,validation,test,pilot,seed_scenarios}.jsonl")
+    print("wrote data/{train,validation,train_hard,test,pilot,test_hard,seed_scenarios}.jsonl")
 
 
 if __name__ == "__main__":

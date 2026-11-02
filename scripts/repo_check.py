@@ -18,8 +18,13 @@ ROOT = Path(__file__).resolve().parent.parent
 LOCK = ROOT / "frozen.lock.json"
 FREEZE_GROUPS = {
     "test": ["data/test.jsonl"],
+    "test_hard": ["data/test_hard.jsonl"],
     "config": ["config/tools.json", "config/policies.yaml"],
 }
+TRAIN_SPLITS = ("train", "validation", "train_hard")  # Fireworks SFT format
+EVAL_SPLITS = ("test", "pilot", "test_hard")  # held out: state + expected results
+SPLIT_GROUP = {"train": "train", "train_hard": "train", "validation": "validation",
+               "test": "test", "test_hard": "test", "pilot": "test"}  # seed-family groups
 ALLOWED_TOP = {
     "README.md", "TASKS.md", "app.py", "requirements.txt", ".env.example", ".gitignore",
     ".gitattributes", "frozen.lock.json", ".claude", ".githooks", "scripts", "config",
@@ -152,7 +157,7 @@ def check_data():
         warnings.append(f"cannot import src/mock_tools.py ({e}); skipping data checks")
         return
     splits = {}
-    for name in ["train", "validation", "test", "pilot"]:
+    for name in TRAIN_SPLITS + EVAL_SPLITS:
         path = f"data/{name}.jsonl"
         if not (ROOT / path).exists():
             continue
@@ -163,7 +168,7 @@ def check_data():
             if not isinstance(msgs, list) or not msgs:
                 errors.append(f"{path}:{i} missing 'messages' list")
                 continue
-            if name in ("train", "validation"):
+            if name in TRAIN_SPLITS:
                 if not any(m.get("role") == "assistant" for m in msgs):
                     errors.append(f"{path}:{i} has no assistant (gold) turn")
                 for m in msgs:
@@ -177,22 +182,22 @@ def check_data():
                 elif not replay_gold(row):
                     errors.append(f"{path}:{i} gold trajectory does not reproduce expected_mutations")
 
-    # Leakage: identical request text across splits
-    if "test" in splits:
-        test_texts = {user_text(r) for r in splits["test"]}
-        for name in ("train", "validation"):
-            dup = sum(1 for r in splits.get(name, []) if user_text(r) in test_texts)
-            if dup:
-                errors.append(f"LEAKAGE: {dup} {name} rows have the exact same request text as a test row")
-
-    # Leakage: test sentences whose wording template (names, ids, numbers masked) also appears in train
-    if "test" in splits and "train" in splits:
-        train_sk = {s for r in splits["train"] for s in skeletons(user_text_raw(r))}
-        test_sk = [s for r in splits["test"] for s in skeletons(user_text_raw(r))]
+    trained_on = [r for name in TRAIN_SPLITS for r in splits.get(name, [])]
+    train_sk = {s for r in trained_on for s in skeletons(user_text_raw(r))}
+    trained_texts = {user_text(r) for r in trained_on}
+    for test_name in ("test", "test_hard"):
+        if test_name not in splits:
+            continue
+        # Leakage: identical request text in anything we train on
+        dup = sum(1 for r in splits[test_name] if user_text(r) in trained_texts)
+        if dup:
+            errors.append(f"LEAKAGE: {dup} {test_name} rows have the exact same request text as a training row")
+        # Leakage: test sentences whose wording template (names, ids, numbers masked) also appears in training data
+        test_sk = [s for r in splits[test_name] for s in skeletons(user_text_raw(r))]
         shared = [s for s in test_sk if s in train_sk]
         if shared:
-            errors.append(f"LEAKAGE: {len(shared)}/{len(test_sk)} test sentences reuse a train wording template, "
-                          f"e.g. '{shared[0]}'")
+            errors.append(f"LEAKAGE: {len(shared)}/{len(test_sk)} {test_name} sentences reuse a training wording "
+                          f"template, e.g. '{shared[0]}'")
 
     # Leakage: same ticket family in multiple splits (via seed_scenarios.jsonl)
     seeds = ROOT / "data/seed_scenarios.jsonl"
@@ -200,10 +205,10 @@ def check_data():
         fam_splits = {}
         for r in read_jsonl("data/seed_scenarios.jsonl"):
             if "family_id" in r and "split" in r:
-                fam_splits.setdefault(r["family_id"], set()).add(r["split"])
+                fam_splits.setdefault(r["family_id"], set()).add(SPLIT_GROUP.get(r["split"], r["split"]))
         bad = [f for f, s in fam_splits.items() if len(s) > 1]
         if bad:
-            errors.append(f"LEAKAGE: {len(bad)} ticket families appear in multiple splits, e.g. {bad[:3]}")
+            errors.append(f"LEAKAGE: {len(bad)} ticket families appear in both train and held-out groups, e.g. {bad[:3]}")
 
 
 def main():
