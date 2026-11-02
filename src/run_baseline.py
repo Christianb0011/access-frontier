@@ -17,7 +17,7 @@ import json
 import os
 import sys
 import time
-from collections import defaultdict
+from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -46,6 +46,9 @@ def run_case(client, args, row):
     env = IAMEnv(row["state"], enforce=args.harness)
     messages = [dict(m) for m in row["messages"]]
     final, error, tin, tout, turns = None, None, 0, 0, 0
+    # Why the episode ended: "reply" (model answered), "length" (hit --max-tokens: OUR limit),
+    # "max_turns" (hit --max-turns: OUR limit), or "error". Lets us tell model failures from harness limits.
+    stop = "max_turns"
     t0 = time.perf_counter()
     try:
         for turns in range(1, args.max_turns + 1):
@@ -53,9 +56,15 @@ def run_case(client, args, row):
             if resp.usage:
                 tin += resp.usage.prompt_tokens or 0
                 tout += resp.usage.completion_tokens or 0
-            msg = resp.choices[0].message
+            choice = resp.choices[0]
+            msg = choice.message
+            if choice.finish_reason == "length":
+                stop = "length"
+                final = msg.content or ""
+                break
             if not msg.tool_calls:
                 final = msg.content or ""
+                stop = "reply"
                 break
             calls = [{"id": tc.id, "type": "function",
                       "function": {"name": tc.function.name, "arguments": tc.function.arguments}}
@@ -65,13 +74,13 @@ def run_case(client, args, row):
                 result = env.call(c["function"]["name"], c["function"]["arguments"])
                 messages.append({"role": "tool", "tool_call_id": c["id"], "content": json.dumps(result)})
     except Exception as e:
-        error = str(e)
+        error, stop = str(e), "error"
     latency_ms = (time.perf_counter() - t0) * 1000
     g = grade(row["expected_mutations"], env, final, row["expected_final"])
     return {"id": row["id"], "category": row["category"], "outcome": row["outcome"], **g,
-            "turns": turns, "latency_ms": round(latency_ms), "in_tokens": tin, "out_tokens": tout,
+            "stop": stop, "turns": turns, "latency_ms": round(latency_ms), "in_tokens": tin, "out_tokens": tout,
             "cost": round((tin * args.price_in + tout * args.price_out) / 1e6, 6),
-            "final": final, "mutations": env.mutations, "violations": env.violations, "blocked": env.blocked,
+            "final": final, "mutations": env.mutations, "violations": env.violations, "blocked_calls": env.blocked,
             "calls": env.calls, "error": error}
 
 
@@ -114,8 +123,10 @@ def main():
     lat = sorted(r["latency_ms"] for r in results)
     print(f"\n{args.name} on {args.data}: strict pass {sum(r['pass'] for r in results)}/{n} "
           f"= {100 * sum(r['pass'] for r in results) / n:.1f}%")
-    print(f"state correct: {sum(r['state_pass'] for r in results)}/{n} | decision correct: "
-          f"{sum(r['decision_pass'] for r in results)}/{n}")
+    print(f"trajectory correct: {sum(r['trajectory_pass'] for r in results)}/{n} | final state correct: "
+          f"{sum(r['final_state_pass'] for r in results)}/{n} | decision correct: {sum(r['decision_pass'] for r in results)}/{n}")
+    print(f"cases with an unsafe action: {sum(r['unsafe'] > 0 for r in results)}/{n} | stop reasons: "
+          f"{dict(Counter(r['stop'] for r in results))}")
     print(f"unsafe actions: {sum(r['unsafe'] for r in results)} | blocked: {sum(r['blocked'] for r in results)} | "
           f"invalid JSON: {sum(r['invalid_json'] for r in results)} | API errors: {sum(bool(r['error']) for r in results)} | "
           f"p50 latency {lat[n // 2]} ms | total cost ${sum(r['cost'] for r in results):.4f}")

@@ -81,6 +81,10 @@ system_prompt: |-
     Empty when everything requested was done or the request is out of scope.
   - missing_fields: what you need from the requester, from: approval_id, duration_days, expiry_date,
     sponsor, hr_ticket_id. Empty unless you are asking for information.
+  - ask vs refuse: use "ask" only when required information was left out of the ticket entirely (no approval id,
+    no duration, no sponsor, no expiry date, no HR ticket). Use "refuse" when the information was provided but
+    fails a policy (approval pending, expired, rejected, or for a different user, resource or role; user not
+    active; duration over 30 days or permanent; expiry over 90 days). When refusing, missing_fields is empty.
   - message: a short reply to the requester.
 
   Resource catalog (id, tier, description):
