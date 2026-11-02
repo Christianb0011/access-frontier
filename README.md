@@ -9,6 +9,8 @@ Fireworks hackathon project. We specialize a small open-weight model (Qwen3 8B) 
 
 **The evaluation in one sentence:** every tool call runs against a deterministic IAM simulator, and we score the **final system state**. There is no LLM-as-a-judge.
 
+**Additional Inspect evaluation:** see [nanda-eval/](nanda-eval/README.md) for the custom benchmark, optional communication judge, reproducible commands and separately reported Kimi K3 pilot results. Its strict scores use a different scoring contract from the legacy results below.
+
 👉 **Who does what, and when: see [TASKS.md](TASKS.md).**
 
 ---

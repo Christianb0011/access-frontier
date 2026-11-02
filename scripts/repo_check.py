@@ -28,7 +28,7 @@ SPLIT_GROUP = {"train": "train", "train_hard": "train", "validation": "validatio
 ALLOWED_TOP = {
     "README.md", "TASKS.md", "app.py", "requirements.txt", ".env.example", ".gitignore",
     ".gitattributes", "frozen.lock.json", ".claude", ".githooks", "scripts", "config",
-    "data", "src", "results", "notebooks", "slides",
+    "data", "src", "results", "notebooks", "slides", "nanda-eval",
 }
 SECRET_PATTERNS = [
     re.compile(r"fw_[A-Za-z0-9]{20,}"),                # Fireworks API key
@@ -87,7 +87,7 @@ def check_layout(staged):
         top = f.split("/")[0]
         if top not in ALLOWED_TOP:
             errors.append(f"{f}: unexpected top-level location (allowed: {', '.join(sorted(ALLOWED_TOP))})")
-        if f.endswith(".py") and top not in {"src", "scripts", "app.py", "notebooks"}:
+        if f.endswith(".py") and top not in {"src", "scripts", "app.py", "notebooks"} and not f.startswith(("nanda-eval/src/", "nanda-eval/scripts/")):
             warnings.append(f"{f}: python code should live in src/")
         if f.endswith(".jsonl") and top != "data" and not f.startswith("results/"):
             warnings.append(f"{f}: datasets belong in data/, predictions in results/")
