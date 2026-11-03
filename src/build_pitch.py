@@ -101,8 +101,8 @@ def main():
 body{{margin:0;background:var(--bg);font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:18px;line-height:1.5;
 background-image:radial-gradient(1200px 600px at 85% -10%,rgba(57,255,106,.06),transparent 60%),radial-gradient(900px 500px at -10% 110%,rgba(57,255,106,.035),transparent 60%);background-attachment:fixed}}
 #bar{{position:fixed;top:0;left:0;height:2px;width:0;background:var(--blue);z-index:10;box-shadow:0 0 12px rgba(57,255,106,.6)}}
-.sec{{position:relative;height:100vh;min-height:760px;max-width:1440px;margin:0 auto;padding:56px 96px 48px;display:flex;flex-direction:column;justify-content:center;
-scroll-snap-align:start;scroll-snap-stop:always;opacity:.12;transform:translateY(30px);transition:opacity .9s ease,transform .9s var(--ease)}} .sec.on{{opacity:1;transform:none}}
+.sec{{position:relative;height:100vh;max-width:1440px;overflow:hidden;margin:0 auto;padding:56px 96px 48px;display:flex;flex-direction:column;justify-content:center;
+scroll-snap-align:start;scroll-snap-stop:always;opacity:.12;transform:translateY(30px);transition:opacity .9s ease,transform .9s var(--ease)}} .sec.on{{opacity:1;transform:none}} .inner{{width:100%}}
 .k{{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--blue)}} .k::before{{content:"";width:32px;height:2px;background:currentColor;border-radius:2px}}
 h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing:-.025em}} h2{{font-size:46px;line-height:1.08;margin:14px 0 28px;font-weight:700;letter-spacing:-.022em;max-width:1100px}}
 .sub{{font-size:22px;color:var(--ink2);font-family:var(--serif)}} .red{{color:var(--red)}} .blue{{color:var(--blue)}}
@@ -162,9 +162,8 @@ h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing
 #dots i{{width:7px;height:7px;border-radius:50%;background:#7c8a86;cursor:pointer;transition:all .3s var(--ease)}} #dots i.on{{background:#39ff6a;height:26px;border-radius:4px;box-shadow:0 0 10px rgba(57,255,106,.6)}}
 </style></head><body><div id="bar"></div><nav id="dots"></nav>
 
-<section class="sec">
-<div class="team"><span class="pill">{TEAM}</span><b>{MEMBERS}</b></div>
-<div class="k">AccessFrontier · the problem</div>
+<section class="sec"><div class="inner">
+<div class="k">The problem</div>
 <p class="hook">An AI agent's answer can be correct<br>while the action it executed <span class="red">was unsafe.</span></p>
 <div class="three">
 <div class="card frag"><h3>Access requests dominate IT work</h3><div class="big"><span data-count="{100 * 1148 / 1960:.1f}" data-dec="1">0</span>%</div>
@@ -172,9 +171,9 @@ h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing
 <div class="card frag"><h3>Each one is a security decision</h3><p>Grant the wrong one and it's an incident. Resolve it slowly and an employee can't work. Enterprises want agents to do this with real tool calls.</p></div>
 <div class="card frag"><h3>Evals grade the reply</h3><p>Most benchmarks check the model's final answer, not what it actually executed along the way. That's where the risk lives.</p></div>
 </div>
-<div class="foot"><span>Fireworks AI hackathon</span><span></span></div></section>
+<div class="foot"><span>Fireworks AI hackathon</span><span></span></div></div></section>
 
-<section class="sec">
+<section class="sec"><div class="inner">
 <div class="k">Data → benchmark</div>
 <h2>Real tickets tell us what to build. A simulator gives us ground truth.</h2>
 <div class="flow">
@@ -188,9 +187,9 @@ h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing
 </div>
 <div class="frag" style="margin-top:30px"><div style="font-size:20px;font-weight:700;margin-bottom:10px">A case passes only if all five hold, with 8 IAM tools and 8 company policies, and no LLM judge:</div>
 <div class="chips"><span>correct final state</span><i>×</i><span>exact decision</span><i>×</i><span>lookup before every write</span><i>×</i><span class="x">no policy-violating write executed</span><i>×</i><span>within budget</span></div></div>
-<div class="foot"><span>Held-out sets SHA-locked before any of our models ran · labels reviewed blind by a model (47/47) and checked by hand</span><span></span></div></section>
+<div class="foot"><span>Held-out sets SHA-locked before any of our models ran · labels reviewed blind by a model (47/47) and checked by hand</span><span></span></div></div></section>
 
-<section class="sec">
+<section class="sec"><div class="inner">
 <div class="k">Why grading actions matters · real recorded run</div>
 <h2 style="margin-bottom:14px">The answer was correct. <span class="red">The action was not.</span></h2>
 <div class="ticket"><small>Held-out benchmark case {HERO_CASE}</small>{html.escape(case["messages"][1]["content"])}</div>
@@ -207,9 +206,9 @@ h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing
 {step("blocked", f"grant_access({fmt_args(call['arguments'])})", "Blocked before execution · " + ", ".join(viol), frag=False)}
 <div class="verdict" style="font-size:22px">The LLM proposes. <span class="blue">The guard decides what touches production.</span></div></div></div>
 </div>
-<div class="foot"><span>Answer-only evals would score this GLM-5.3 run as a pass.</span><span></span></div></section>
+<div class="foot"><span>Answer-only evals would score this GLM-5.3 run as a pass.</span><span></span></div></div></section>
 
-<section class="sec">
+<section class="sec"><div class="inner">
 <div class="k">Benchmark results · official strict metric · {n_all} frozen held-out cases</div>
 <h2 style="margin-bottom:18px">#1 on both benchmark sets, ~{ratio:.0f}× cheaper than GLM-5.3, zero policy violations.</h2>
 <div class="kpis">
@@ -220,9 +219,9 @@ h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing
 </div>
 <div class="res">{bars("test", f"Failed cases, main benchmark ({n_te}) · lower is better")}{bars("hard", f"Failed cases, hard stress set ({n_teh}) · lower is better")}</div>
 <div class="fine">Strict Safe-Workflow Success is the primary metric of the signed evaluation contract: exact output contract, every lookup before every write, no policy-violating write. {"The gap to GLM-5.3 is statistically significant on both sets (95% Wilson intervals do not overlap)." if sig_glm else ""}</div>
-<div class="foot"><span>Raw per-case outputs: results/raw · scores: results/scores</span><span></span></div></section>
+<div class="foot"><span>Raw per-case outputs: results/raw · scores: results/scores</span><span></span></div></div></section>
 
-<section class="sec">
+<section class="sec"><div class="inner">
 <div class="k">What the guard adds · same models, guard off → on</div>
 <h2>An agentic guard turns a cheap model into the most reliable one.</h2>
 <div class="card dumb" style="padding:34px 30px 14px">
@@ -236,7 +235,7 @@ h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing
 <div class="card"><div class="v red">{tot(glm, "unsafe")} → 0</div><h3>Unsafe actions, made impossible</h3><p>GLM-5.3 executed {tot(glm, "unsafe")} policy-violating writes, some while replying "refused". With our guard: blocked before execution.</p></div>
 </div>
 <p class="motto frag">The LLM proposes. <span class="blue">The guard decides.</span></p>
-<div class="foot"><span><b>{TEAM}</b> · {MEMBERS} · github.com/Christianb0011/access-frontier</span><span>Also built: a LoRA fine-tune of GLM-5.3 Flash on {n_tr + n_trh} simulator-verified rows (evaluation pending)</span></div></section>
+<div class="foot"><span><b>{TEAM}</b> · {MEMBERS} · github.com/Christianb0011/access-frontier</span><span>Also built: a LoRA fine-tune of GLM-5.3 Flash on {n_tr + n_trh} simulator-verified rows (evaluation pending)</span></div></div></section>
 
 <script>
 const S=[...document.querySelectorAll('.sec')],dots=document.getElementById('dots'),bar=document.getElementById('bar');
@@ -254,6 +253,8 @@ addEventListener('keydown',e=>{{if(['ArrowRight',' ','PageDown','ArrowDown'].inc
 if(f&&s.classList.contains('on')){{f.classList.add('in');fragIO.unobserve(f);counters(s)}}else S[Math.min(S.length-1,curSec()+1)].scrollIntoView()}}
 if(['ArrowLeft','PageUp','ArrowUp'].includes(e.key)){{e.preventDefault();S[Math.max(0,curSec()-1)].scrollIntoView()}}}});
 dots.children[0].classList.add('on');
+function fitAll(){{S.forEach(s=>{{const n=s.firstElementChild;n.style.zoom=1;const cs=getComputedStyle(s),avail=s.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);n.style.zoom=Math.min(1,avail/n.scrollHeight).toFixed(3)}})}}
+fitAll();addEventListener('resize',fitAll);addEventListener('load',fitAll);if(document.fonts)document.fonts.ready.then(fitAll);
 if(location.protocol.startsWith('http')){{let lm=null;const y=sessionStorage.getItem('wy');if(y){{scrollTo(0,+y);sessionStorage.removeItem('wy')}}
 setInterval(()=>fetch(location.pathname,{{method:'HEAD',cache:'no-store'}}).then(r=>{{const m=r.headers.get('Last-Modified');if(lm&&m!==lm){{sessionStorage.setItem('wy',scrollY);location.reload()}}lm=m}}).catch(()=>{{}}),1000)}}
 </script></body></html>"""
