@@ -153,6 +153,7 @@ h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing
 .axis{{position:relative;height:20px;margin-left:220px;margin-right:230px}} .axis span{{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:var(--muted)}}
 .on .meter i{{width:var(--w)}} .on .fun i{{width:var(--w)}} .on .bar{{width:var(--w)}} .on .dseg{{width:var(--w)}} .on .ddot.a{{opacity:1}}
 .on .frag:not(.in) .bar,.on .frag:not(.in) .dseg{{width:0}} .on .frag:not(.in) .ddot.a{{opacity:0}}
+.lift{{border:1px solid rgba(57,255,106,.28);border-radius:20px;padding:16px 26px 18px;margin-bottom:20px;background:linear-gradient(90deg,rgba(57,255,106,.06),transparent)}}.lift-k{{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--blue);margin-bottom:10px}}.lift-row{{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}} .lift-row div{{font-family:var(--mono);font-size:30px;color:var(--ink)}}.lift-row span{{color:var(--muted)}} .lift-row b{{color:var(--blue);font-weight:500}} .lift-row small{{display:block;font-family:var(--sans);font-size:13px;color:var(--ink2);margin-top:4px}}.biz{{margin-top:16px;font-size:17px;color:var(--ink2)}} .biz b{{color:var(--blue);font-weight:600}}
 .fine{{font-size:12.5px;color:var(--muted);margin-top:14px;max-width:1100px}}
 /* 5 */
 .finds{{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}} .finds .v{{font-family:var(--mono);font-size:52px;font-weight:500;color:var(--blue);line-height:1;margin-bottom:16px;letter-spacing:-.03em}} .finds .v.red{{color:var(--red)}}
@@ -189,7 +190,7 @@ h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing
 <div class="chips"><span>correct final state</span><i>×</i><span>exact decision</span><i>×</i><span>lookup before every write</span><i>×</i><span class="x">no policy-violating write executed</span><i>×</i><span>within budget</span></div></div>
 <div class="foot"><span>Held-out sets SHA-locked before any of our models ran · labels reviewed blind by a model (47/47) and checked by hand</span><span></span></div></div></section>
 
-<section class="sec"><div class="inner">
+<section class="sec" data-manual="1"><div class="inner">
 <div class="k">Why grading actions matters · real recorded run</div>
 <h2 style="margin-bottom:14px">The answer was correct. <span class="red">The action was not.</span></h2>
 <div class="ticket"><small>Held-out benchmark case {HERO_CASE}</small>{html.escape(case["messages"][1]["content"])}</div>
@@ -215,9 +216,11 @@ h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing
 <div class="card kpi"><div class="v"><span data-count="{sp_pct(ours, "test"):.1f}" data-dec="1">0</span>%</div><div class="l">main benchmark (GLM-5.3 {sp_pct(glm, "test"):.1f}%)</div></div>
 <div class="card kpi"><div class="v"><span data-count="{sp_pct(ours, "hard"):.1f}" data-dec="1">0</span>%</div><div class="l">hard stress set (GLM-5.3 {sp_pct(glm, "hard"):.1f}%)</div></div>
 <div class="card kpi"><div class="v"><span data-count="{100 * (1 - f_ours / f_glm):.0f}">0</span>%</div><div class="l">fewer failed cases than GLM-5.3 ({f_ours} vs {f_glm})</div></div>
-<div class="card kpi"><div class="v"><span data-count="{tot(ours, "unsafe")}">0</span></div><div class="l">policy-violating writes (GLM-5.3: {tot(glm, "unsafe")}) · ${ours["test"]["cost"]:.4f} vs ${glm["test"]["cost"]:.4f}/ticket</div></div>
+<div class="card kpi"><div class="v"><span data-count="{tot(ours, "unsafe")}">0</span></div><div class="l">policy-violating writes executed (GLM-5.3: {tot(glm, "unsafe")})</div></div>
 </div>
+<div class="lift"><div class="lift-k">Improvement over baseline · same models, our harness off → on</div><div class="lift-row"><div><span>{sp_pct(base, "test"):.1f}%</span> → <b>{sp_pct(ours, "test"):.1f}%</b><small>GLM-5.3 Flash · main benchmark</small></div><div><span>{sp_pct(base, "hard"):.1f}%</span> → <b>{sp_pct(ours, "hard"):.1f}%</b><small>GLM-5.3 Flash · hard set</small></div><div><span>{f_base}</span> → <b>{f_ours}</b><small>failed cases ({100 * (1 - f_ours / f_base):.0f}% fewer)</small></div><div><span>{sp_pct(glm, "hard"):.1f}%</span> → <b>{sp_pct(glm_g, "hard"):.1f}%</b><small>GLM-5.3 + our harness · hard set</small></div></div></div>
 <div class="res">{bars("test", f"Failed cases, main benchmark ({n_te}) · lower is better")}{bars("hard", f"Failed cases, hard stress set ({n_teh}) · lower is better")}</div>
+<div class="biz">At Fireworks list prices, measured tokens: <b>${10000 * ours["test"]["cost"]:.2f} per 10,000 tickets</b> with our harness vs ${10000 * glm["test"]["cost"]:.2f} with GLM-5.3, and zero policy-violating writes.</div>
 <div class="fine">Strict Safe-Workflow Success is the primary metric of the signed evaluation contract: exact output contract, every lookup before every write, no policy-violating write. {"The gap to GLM-5.3 is statistically significant on both sets (95% Wilson intervals do not overlap)." if sig_glm else ""}</div>
 <div class="foot"><span>Raw per-case outputs: results/raw · scores: results/scores</span><span></span></div></div></section>
 
@@ -230,7 +233,7 @@ h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing
 <div class="fine" style="margin-left:230px">Strict success, guard off (gray) → on (green). The guard completes missing lookups, enforces the output contract, and deterministically blocks policy-violating writes. It needs no training and no changes to the model.</div>
 </div>
 <div class="finds frag" style="margin-top:26px">
-<div class="card"><div class="v">~{ratio:.0f}×</div><h3>Frontier quality, open-model price</h3><p>GLM-5.3 Flash + guard beats both frontier models on the strict metric, at ${ours["test"]["cost"]:.4f} per ticket, with a {ours["test"]["p50"]}s median vs {glm["test"]["p50"]}s.</p></div>
+<div class="card"><div class="v">~{ratio:.0f}×</div><h3>Frontier quality, open-model price</h3><p>Our harness beats both frontier models on the strict metric at ${10000 * ours["test"]["cost"]:.2f} per 10,000 tickets (GLM-5.3: ${10000 * glm["test"]["cost"]:.2f}), with a {ours["test"]["p50"]}s median vs {glm["test"]["p50"]}s.</p></div>
 <div class="card"><div class="v"><span data-count="{100 * (1 - fails(ours, "test") / fails(base, "test")):.0f}">0</span>%</div><h3>Fewer failures from the guard alone</h3><p>On the main set: {fails(base, "test")} → {fails(ours, "test")}. {fmt_err} of the base model's {f_base} failures were output-contract errors, exactly what the guard enforces.</p></div>
 <div class="card"><div class="v red">{tot(glm, "unsafe")} → 0</div><h3>Unsafe actions, made impossible</h3><p>GLM-5.3 executed {tot(glm, "unsafe")} policy-violating writes, some while replying "refused". With our guard: blocked before execution.</p></div>
 </div>
@@ -244,7 +247,7 @@ function counters(root){{root.querySelectorAll('[data-count]').forEach(e=>{{if(e
 const to=+e.dataset.count,dec=+(e.dataset.dec||0),sep=e.dataset.sep,t0=performance.now(),D=1300;
 (function f(t){{const p=Math.min(1,(t-t0)/D),v=to*(1-Math.pow(1-p,3));e.textContent=sep?Math.round(v).toLocaleString('en-US'):v.toFixed(dec);if(p<1)requestAnimationFrame(f)}})(t0)}})}}
 const secIO=new IntersectionObserver(es=>es.forEach(e=>{{if(e.isIntersecting){{e.target.classList.add('on');counters(e.target)}}}}),{{threshold:.3}});S.forEach(s=>secIO.observe(s));
-const fragIO=new IntersectionObserver(es=>es.forEach(e=>{{if(e.isIntersecting){{const f=e.target,sec=f.closest('.sec'),prev=[...sec.querySelectorAll('.frag:not(.in)')].indexOf(f);
+const fragIO=new IntersectionObserver(es=>es.forEach(e=>{{if(e.isIntersecting){{const f=e.target,sec=f.closest('.sec');if(sec.dataset.manual)return;const prev=[...sec.querySelectorAll('.frag:not(.in)')].indexOf(f);
 setTimeout(()=>{{f.classList.add('in');counters(sec)}},Math.max(0,prev)*450);fragIO.unobserve(f)}}}}),{{rootMargin:'0px 0px -12% 0px',threshold:.6}});
 document.querySelectorAll('.frag').forEach(f=>fragIO.observe(f));
 function curSec(){{let b=0;S.forEach((s,k)=>{{if(s.getBoundingClientRect().top<innerHeight*.4)b=k}});return b}}
