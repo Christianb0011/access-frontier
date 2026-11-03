@@ -1,16 +1,31 @@
 # AccessFrontier
 
-### ▶ [Watch the 2-min demo video](demo/accessfrontier_video.mp4) · then open the results walkthrough (below)
+**An AI agent's answer can be correct while the action it executed was unsafe.** AccessFrontier is an agentic harness and a frozen benchmark for enterprise access (IAM) tickets, built on Fireworks AI. Team **IAMpossible**: NandaKiran Velaga, Christian Bakhos.
 
-Team **IAMpossible**: NandaKiran Velaga, Christian Bakhos.
+> **Our harness (GLM-5.3 Flash + deterministic guard): 99.0% on both frozen held-out sets** vs 90.5% / 81.9% for GLM-5.3 · **92% fewer failed cases** · **0 policy-violating writes** · **$4.19 vs $36.27 per 10,000 tickets** · faster (4.9 s vs 7.0 s)
 
-> **▶ Open the results walkthrough (10 seconds, no install):** clone the repo, then either double-click `demo/walkthrough.html`, or run
-> `python -m http.server 8765 --directory demo` and open http://127.0.0.1:8765/walkthrough.html. Scroll, or press → / Space; every number on it is computed from `results/`.
+### ▶ [Watch the demo video](demo/accessfrontier_video.mp4) (2 min)
 
-**An AI agent's answer can be correct while the action it executed was unsafe.** AccessFrontier is an agentic harness and a benchmark for enterprise IAM (access) tickets, built on Fireworks AI.
+### ▶ Open the results walkthrough (10 seconds, no install)
+Clone the repo and double-click `demo/walkthrough.html`, or run `python -m http.server 8765 --directory demo` and open http://127.0.0.1:8765/walkthrough.html. Scroll, or press → / Space. Every number on it is computed from `results/`.
 
-- **The harness:** a cheap open model (GLM-5.3 Flash) plus an agentic layer and a deterministic execution guard. The model reasons and calls tools; the guard decides what is allowed to touch production.
-- **The benchmark:** 305 frozen held-out tickets, 8 IAM tools, 8 company policies and a deterministic simulator. It grades the **state transition the agent executed**, not just its reply. There is no LLM judge.
+## For judges: where to look
+
+| Criterion | Evidence |
+|---|---|
+| **Benchmark improvement** | Strict score: Flash 96.0% → **99.0%** (main) and 95.2% → **99.0%** (hard) with our harness; failures 13 → 3. GLM-5.3 81.9% → 96.2% behind the same harness. [Results](#results-at-a-glance) · [per-case outputs](results/raw/) · [ledger with CIs](results/ledger.csv) |
+| **Business value** | Access requests are the bulk of IT tickets, and each is a security decision. Frontier-level reliability with zero policy violations at about 9× lower cost. [Why it matters](#why-it-matters) |
+| **Technical execution** | Frozen, hash-locked test sets and scorer; deterministic simulator with no LLM judge; agentic layer + execution guard ([src/guarded_agent.py](src/guarded_agent.py)); Inspect harness ([nanda-eval/](nanda-eval/)); LoRA fine-tune on Fireworks. |
+| **Demo** | The [video](demo/accessfrontier_video.mp4) and the [walkthrough](demo/walkthrough.html): a real recorded run where GLM-5.3 grants payroll access to a disabled user, then replies "refused". |
+| **Documentation** | [Evaluation contract](docs/EVAL_CONTRACT_v2.md) · [data provenance](docs/DATA_PROVENANCE.md) · [audit](docs/DATASET_AND_EVAL_AUDIT.md) · [blind label review](docs/review/) · [Gate 2 sign-off](docs/GATE2_SIGNOFF.md) · [history and disclosures](docs/HISTORY_v1.md) |
+
+## Why it matters
+
+- **Access requests dominate IT work:** in a public set of real IT-support tickets, 58.6% of English tickets match access, account or mailbox keywords. Every slow one is an employee who can't work.
+- **Every one is a security decision.** One wrong grant is an incident. Enterprises want agents to resolve these with real tool calls, but most evaluations grade only the agent's reply.
+- **Our harness makes a cheap model safe to deploy:** the model reasons and proposes tool calls, and the guard decides what is allowed to touch production. It blocks policy violations before they execute, which is auditable for security teams, at $4.19 per 10,000 tickets.
+
+**How it works.** The harness is a cheap open model (GLM-5.3 Flash) plus an agentic layer that completes missing evidence lookups and enforces the output contract, plus a deterministic execution guard. The benchmark is 305 frozen held-out tickets, 8 IAM tools, 8 company policies and a deterministic simulator. It grades the **state transition the agent executed**, not just its reply.
 
 ## Results at a glance
 

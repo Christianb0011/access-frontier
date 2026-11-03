@@ -1,5 +1,7 @@
 # Nanda IAM evaluation
 
+> **Note:** this folder is the Inspect evaluation harness used for the **official results in the [root README](../README.md)** (unified contract v2.0, [docs/EVAL_CONTRACT_v2.md](../docs/EVAL_CONTRACT_v2.md)). The reports linked below are earlier exploratory runs under a pre-v2.0 scoring contract, kept for the record; their numbers are not comparable to the official table.
+
 Inspect AI benchmark with deterministic IAM state/trace scoring and optional, separately reported LLM communication judging.
 
 - [Specification and exact scoring](SPEC.md)
