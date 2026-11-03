@@ -31,7 +31,7 @@ EVAL_SPLITS = ("test", "pilot", "test_hard")  # held out: state + expected resul
 SPLIT_GROUP = {"train": "train", "train_hard": "train", "validation": "validation",
                "test": "test", "test_hard": "test", "pilot": "test"}  # seed-family groups
 ALLOWED_TOP = {
-    "README.md", "TASKS.md", "app.py", "requirements.txt", ".env.example", ".gitignore",
+    "README.md", "requirements.txt", ".env.example", ".gitignore", ".github",
     ".gitattributes", "frozen.lock.json", ".claude", ".githooks", "scripts", "config",
     "data", "src", "results", "notebooks", "slides", "docs", "nanda-eval", "demo",
 }

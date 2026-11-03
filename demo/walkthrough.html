@@ -166,6 +166,6 @@ if(['ArrowLeft','PageUp','ArrowUp'].includes(e.key)){e.preventDefault();S[Math.m
 dots.children[0].classList.add('on');
 function fitAll(){S.forEach(s=>{const n=s.firstElementChild;n.style.zoom=1;const cs=getComputedStyle(s),avail=s.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);n.style.zoom=Math.min(1,avail/n.scrollHeight).toFixed(3)})}
 fitAll();addEventListener('resize',fitAll);addEventListener('load',fitAll);if(document.fonts)document.fonts.ready.then(fitAll);
-if(location.protocol.startsWith('http')){let lm=null;const y=sessionStorage.getItem('wy');if(y){scrollTo(0,+y);sessionStorage.removeItem('wy')}
+if(['127.0.0.1','localhost'].includes(location.hostname)){let lm=null;const y=sessionStorage.getItem('wy');if(y){scrollTo(0,+y);sessionStorage.removeItem('wy')}
 setInterval(()=>fetch(location.pathname,{method:'HEAD',cache:'no-store'}).then(r=>{const m=r.headers.get('Last-Modified');if(lm&&m!==lm){sessionStorage.setItem('wy',scrollY);location.reload()}lm=m}).catch(()=>{}),1000)}
 </script></body></html>

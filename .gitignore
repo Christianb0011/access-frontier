@@ -3,3 +3,7 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# raw screen recordings (the committed, compressed demo video is demo/accessfrontier_video.mp4)
+/*.mp4
+/*.mov
