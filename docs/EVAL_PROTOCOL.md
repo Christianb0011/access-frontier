@@ -1,5 +1,7 @@
 # Evaluation Protocol (versioned)
 
+> **Superseded.** This was the pre-implementation plan. The implemented, signed contract is [EVAL_CONTRACT_v2.md](EVAL_CONTRACT_v2.md) (Gate 2 sign-off: [GATE2_SIGNOFF.md](GATE2_SIGNOFF.md)). Kept for the audit trail.
+
 **Status:** v2.0 is **planned, not implemented**. Nothing below has been applied to the frozen data, the policies or the grader.
 **Depends on:** [POLICY_SPEC.md](POLICY_SPEC.md), which must be human-approved first, and the decisions D1–D9 in [REMEDIATION_PROPOSAL.md](REMEDIATION_PROPOSAL.md).
 
