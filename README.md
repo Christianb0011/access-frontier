@@ -1,5 +1,7 @@
 # AccessFrontier
 
+▶ **[Watch the demo video](demo/accessfrontier_video.mp4)** (2 min) · team **IAMpossible**: NandaKiran Velaga, Christian Bakhos · interactive walkthrough: open [demo/walkthrough.html](demo/walkthrough.html)
+
 Fireworks hackathon project. We specialize a small open-weight model (Qwen3 8B) to resolve real enterprise IAM tickets by **calling company-specific tools correctly and safely**. A policy harness checks every action, and a router sends hard or high-risk requests to a larger model.
 
 **The claim we want to prove:**
