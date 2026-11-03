@@ -3,7 +3,7 @@
 **Setup:**
 - Open http://127.0.0.1:8765/walkthrough.html (or `demo/walkthrough.html`) in a full-screen browser (F11) and screen-record.
 - Scroll or press → to move between sections. Each section snaps to one screen.
-- Section 3 is click-through: press → once per step, on the cue words marked **[→]**.
+- Section 3 plays itself: once you scroll in, one step appears about every 2.4 s, roughly the pace of the script. The **[→]** marks show where each step lands. If you're ahead of the animation, press → to bring the next step in immediately.
 - About 260 words at a calm pace. Every number below appears on screen and comes from `results/`.
 
 ---
@@ -18,7 +18,7 @@
 
 *Scroll ↓*
 
-### 3 · The payroll case (0:32–1:00), click-through
+### 3 · The payroll case (0:32–1:00), auto-plays
 > Here's why that matters. A real run: write access to Payroll for Caleb Fischer.
 > GLM-5.3 looks him up **[→]**: the account is disabled.
 > It checks both approvals **[→][→]**,

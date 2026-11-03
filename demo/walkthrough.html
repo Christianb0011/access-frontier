@@ -34,7 +34,7 @@ h1{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing:
 .chips{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:17px} .chips span{background:var(--surface);border:1px solid var(--grid);border-radius:999px;padding:9px 18px} .chips i{font-style:normal;color:var(--muted)}
 .chips.sm{gap:6px} .chips.sm span{padding:6px 12px;font-size:14px} .chips .x{border-color:transparent;color:var(--red);font-weight:600;background:var(--red2)} .chips .ok{border-color:transparent;background:rgba(233,236,234,.06);color:var(--ink2)}
 /* 3 */
-.case{display:grid;grid-template-columns:1.15fr 1fr;gap:28px}
+.case{display:grid;grid-template-columns:1.15fr 1fr;gap:28px;align-items:start}
 .ticket{background:var(--surface);border-radius:16px;padding:16px 22px;font-size:20px;font-family:var(--mono);margin-bottom:22px;box-shadow:var(--shadow)}
 .ticket small{display:block;font-size:12px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:2px}
 .panel{background:var(--surface);border-radius:22px;padding:22px 24px;box-shadow:var(--shadow);position:relative;overflow:hidden}
@@ -97,7 +97,7 @@ h1{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing:
 <div class="chips"><span>correct final state</span><i>×</i><span>exact decision</span><i>×</i><span>lookup before every write</span><i>×</i><span class="x">no policy-violating write executed</span><i>×</i><span>within budget</span></div></div>
 <div class="foot"><span>Held-out sets SHA-locked before any of our models ran · labels reviewed blind by a model (47/47) and checked by hand</span><span></span></div></div></section>
 
-<section class="sec" data-manual="1"><div class="inner">
+<section class="sec" data-play="2400"><div class="inner">
 <div class="k">Why grading actions matters · real recorded run</div>
 <h2 style="margin-bottom:14px">The answer was correct. <span class="red">The action was not.</span></h2>
 <div class="ticket"><small>Held-out benchmark case test_hard-0089</small>Access request for Caleb Fischer -&gt; Payroll, level write. Authorised via DO-4890 and APP-5331.</div>
@@ -153,8 +153,9 @@ S.forEach((s,k)=>{const d=document.createElement('i');d.onclick=()=>S[k].scrollI
 function counters(root){root.querySelectorAll('[data-count]').forEach(e=>{if(e.closest('.frag:not(.in)')||e.dataset.done)return;e.dataset.done=1;
 const to=+e.dataset.count,dec=+(e.dataset.dec||0),sep=e.dataset.sep,t0=performance.now(),D=1300;
 (function f(t){const p=Math.min(1,(t-t0)/D),v=to*(1-Math.pow(1-p,3));e.textContent=sep?Math.round(v).toLocaleString('en-US'):v.toFixed(dec);if(p<1)requestAnimationFrame(f)})(t0)})}
-const secIO=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');counters(e.target)}}),{threshold:.3});S.forEach(s=>secIO.observe(s));
-const fragIO=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){const f=e.target,sec=f.closest('.sec');if(sec.dataset.manual)return;const prev=[...sec.querySelectorAll('.frag:not(.in)')].indexOf(f);
+function play(s){if(s.dataset.started)return;s.dataset.started=1;setTimeout(function tick(){const f=s.querySelector('.frag:not(.in)');if(!f)return;f.classList.add('in');counters(s);setTimeout(tick,+s.dataset.play)},700)}
+const secIO=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');counters(e.target);if(e.target.dataset.play)play(e.target)}}),{threshold:.5});S.forEach(s=>secIO.observe(s));
+const fragIO=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){const f=e.target,sec=f.closest('.sec');if(sec.dataset.play)return;const prev=[...sec.querySelectorAll('.frag:not(.in)')].indexOf(f);
 setTimeout(()=>{f.classList.add('in');counters(sec)},Math.max(0,prev)*450);fragIO.unobserve(f)}}),{rootMargin:'0px 0px -12% 0px',threshold:.6});
 document.querySelectorAll('.frag').forEach(f=>fragIO.observe(f));
 function curSec(){let b=0;S.forEach((s,k)=>{if(s.getBoundingClientRect().top<innerHeight*.4)b=k});return b}
