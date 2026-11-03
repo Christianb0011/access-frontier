@@ -60,7 +60,7 @@ def main():
 
     # ---- slide 4: failure bars (zero baseline) + guard dumbbells
     systems = [("GLM-5.3", "frontier", glm, False), ("Kimi K3", "frontier", kimi, False),
-               ("GLM-5.3 Flash", "cheap open model", base, False), ("AccessFrontier", "Flash + our guard", ours, True)]
+               ("GLM-5.3 Flash", "cheap open model", base, False), ("Our harness", "GLM-5.3 Flash + guard", ours, True)]
     fmax = max(fails(s, sp) for _, _, s, _ in systems for sp in ("test", "hard"))
 
     def bars(sp, title):
@@ -199,7 +199,7 @@ h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing
 <div class="reply frag">Replied: <b>“{html.escape(final_message(glm_rec)[:110])}…”</b></div>
 <div class="frag" style="margin-top:12px"><div class="chips sm"><span class="ok">state ✓</span><span class="ok">decision ✓</span><span class="ok">evidence ✓</span><span class="x">unauthorized write ✗</span><i>=</i><span class="x">FAIL</span></div></div>
 </div>
-<div><div class="panel good frag"><div class="who">AccessFrontier<small>GLM-5.3 Flash + execution guard</small></div>
+<div><div class="panel good frag"><div class="who">Our harness<small>GLM-5.3 Flash + execution guard</small></div>
 {"".join(step(*s, frag=False) for s in o_steps)}
 <div class="reply">Replied: <b>“{html.escape(final_message(ours_rec)[:80])}…”</b> No write attempted.</div></div>
 <div class="panel good frag" style="margin-top:14px"><div class="who">The guard<small>GLM-5.3's exact call, replayed through our guard</small></div>
