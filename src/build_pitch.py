@@ -14,8 +14,9 @@ from build_demo import (BLUE, HERO_CASE, ROOT, final_message, fmt_args, guard_re
 OUT = ROOT / "demo"
 OUT.mkdir(exist_ok=True)
 TEAM, MEMBERS = "IAMpossible", "NandaKiran Velaga · Christian Bakhos"
-GRAY, RED = "#8a9490", "#d03b3b"
+GRAY, RED = "#5f6b67", "#ff6b5e"
 ACCENT, ACCENT_DARK = "#167a36", "#39ff6a"  # LatentLane palette: ink green (light), signal green (dark)
+OURS_FILL = "var(--blue)"  # accent token (LatentLane signal green on the dark theme)
 
 
 def wilson(k, n, z=1.96):
@@ -65,7 +66,7 @@ def main():
     def bars(sp, title):
         rows = "".join(
             f'<div class="brow{" ours" if mine else ""}"><div class="bname">{n}<small>{r}</small></div>'
-            f'<div class="btrack"><div class="bar" style="--w:{max(1.2, 100 * fails(s, sp) / fmax):.1f}%;background:{ACCENT if mine else GRAY}" '
+            f'<div class="btrack"><div class="bar" style="--w:{max(1.2, 100 * fails(s, sp) / fmax):.1f}%;background:{OURS_FILL if mine else GRAY}" '
             f'title="{n}: {fails(s, sp)} failed of {s[sp]["n"]} ({pct(s[sp]["raw"], s[sp]["n"])} pass)"></div>'
             f'<span class="blab"><b>{fails(s, sp)}</b> failed · {pct(s[sp]["raw"], s[sp]["n"])} pass</span></div></div>'
             for n, r, s, mine in systems)
@@ -93,21 +94,21 @@ def main():
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AccessFrontier · {TEAM}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:ital,wght@0,400;0,500;1,400&display=swap"><style>
-:root{{--bg:#f4f5f2;--ink:#1c1d1e;--ink2:#3c3e41;--muted:#6b736f;--grid:#e2e5e1;--blue:{ACCENT};--blue2:#e8f2ea;--red:{RED};--red2:#fbf0ef;--ok:#006300;--surface:#fff;
---shadow:0 1px 2px rgba(28,29,30,.04),0 18px 40px -22px rgba(28,29,30,.16);--ease:cubic-bezier(.2,.8,.2,1);
-*{{box-sizing:border-box}} html{{scroll-behavior:smooth}}
+:root{{--bg:#06080b;--ink:#e9ecea;--ink2:#a9b0ac;--muted:#7c8a86;--grid:#1a2024;--blue:{ACCENT_DARK};--blue2:rgba(57,255,106,.07);--red:#ff6b5e;--red2:rgba(255,107,94,.09);
+--ok:#a9b0ac;--surface:#0c1013;--edge:rgba(233,236,234,.08);--shadow:none;--ease:cubic-bezier(.2,.8,.2,1);
 --sans:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;--serif:"Source Serif 4",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,Consolas,monospace}}
-body{{margin:0;background:var(--bg);font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:18px;line-height:1.5}}
-#bar{{position:fixed;top:0;left:0;height:3px;width:0;background:var(--blue);z-index:10}}
-.sec{{position:relative;min-height:100vh;max-width:1440px;margin:0 auto;padding:96px 96px 88px;display:flex;flex-direction:column;justify-content:center;
-opacity:.1;transform:translateY(36px);transition:opacity 1s ease,transform 1s var(--ease)}} .sec.on{{opacity:1;transform:none}}
-.sec.dark{{background:#06080b;box-shadow:0 0 0 100vmax #06080b;clip-path:inset(0 -100vmax);color:#e9ecea;--ink:#e9ecea;--ink2:#a9b0ac;--muted:#7c8a86;--grid:#1d2420;--blue:{ACCENT_DARK};--red:#ff6b5e;--surface:#0d1114}}
+*{{box-sizing:border-box}} html{{scroll-snap-type:y mandatory;scroll-behavior:smooth}}
+body{{margin:0;background:var(--bg);font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:18px;line-height:1.5;
+background-image:radial-gradient(1200px 600px at 85% -10%,rgba(57,255,106,.06),transparent 60%),radial-gradient(900px 500px at -10% 110%,rgba(57,255,106,.035),transparent 60%);background-attachment:fixed}}
+#bar{{position:fixed;top:0;left:0;height:2px;width:0;background:var(--blue);z-index:10;box-shadow:0 0 12px rgba(57,255,106,.6)}}
+.sec{{position:relative;height:100vh;min-height:760px;max-width:1440px;margin:0 auto;padding:56px 96px 48px;display:flex;flex-direction:column;justify-content:center;
+scroll-snap-align:start;scroll-snap-stop:always;opacity:.12;transform:translateY(30px);transition:opacity .9s ease,transform .9s var(--ease)}} .sec.on{{opacity:1;transform:none}}
 .k{{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--blue)}} .k::before{{content:"";width:32px;height:2px;background:currentColor;border-radius:2px}}
-h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing:-.025em}} h2{{font-size:46px;line-height:1.08;margin:16px 0 36px;font-weight:700;letter-spacing:-.022em;max-width:1100px}}
+h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing:-.025em}} h2{{font-size:46px;line-height:1.08;margin:14px 0 28px;font-weight:700;letter-spacing:-.022em;max-width:1100px}}
 .sub{{font-size:22px;color:var(--ink2);font-family:var(--serif)}} .red{{color:var(--red)}} .blue{{color:var(--blue)}}
 .frag{{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s var(--ease)}} .frag.in{{opacity:1;transform:none}}
 .foot{{margin-top:44px;display:flex;justify-content:space-between;gap:30px;font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.01em}}
-.card{{background:var(--surface);border:1px solid rgba(20,20,20,.05);border-radius:22px;padding:28px 30px;box-shadow:var(--shadow)}}
+.card{{background:var(--surface);border:1px solid var(--edge);border-radius:22px;padding:28px 30px;box-shadow:var(--shadow)}}
 .dark .card{{border-color:rgba(255,255,255,.07);box-shadow:none}}
 /* 1 */
 .team{{display:flex;gap:16px;align-items:center;font-size:17px;color:var(--ink2);margin-bottom:56px}} .team b{{color:var(--ink);font-weight:500}}
@@ -122,9 +123,9 @@ h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing
 .fun i{{display:block;height:14px;width:0;background:var(--blue);border-radius:0 4px 4px 0;transition:width 1.3s var(--ease)}} .fun span{{font-size:16px;color:var(--ink2)}}
 .splits{{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}} .split{{border-radius:18px;padding:18px 22px;background:var(--surface);box-shadow:var(--shadow)}}
 .split b{{display:block;font-family:var(--mono);font-size:40px;line-height:1;font-weight:500;letter-spacing:-.03em}} .split span{{font-size:14px;color:var(--ink2)}}
-.split.lock{{background:#06080b;color:#e9ecea;box-shadow:none}} .split.lock span{{color:#a9b0ac}} .split.lock b::after{{content:"  locked";font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#39ff6a;font-family:var(--mono);vertical-align:middle}}
+.split.lock{{background:transparent;border:1px solid rgba(57,255,106,.4);color:#e9ecea;box-shadow:none}} .split.lock span{{color:#a9b0ac}} .split.lock b::after{{content:"  locked";font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#39ff6a;font-family:var(--mono);vertical-align:middle}}
 .chips{{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:17px}} .chips span{{background:var(--surface);border:1px solid var(--grid);border-radius:999px;padding:9px 18px}} .chips i{{font-style:normal;color:var(--muted)}}
-.chips.sm{{gap:6px}} .chips.sm span{{padding:6px 12px;font-size:14px}} .chips .x{{border-color:transparent;color:var(--red);font-weight:600;background:var(--red2)}} .chips .ok{{border-color:transparent;background:#e9ece8;color:var(--ink2)}}
+.chips.sm{{gap:6px}} .chips.sm span{{padding:6px 12px;font-size:14px}} .chips .x{{border-color:transparent;color:var(--red);font-weight:600;background:var(--red2)}} .chips .ok{{border-color:transparent;background:rgba(233,236,234,.06);color:var(--ink2)}}
 /* 3 */
 .case{{display:grid;grid-template-columns:1.15fr 1fr;gap:28px}}
 .ticket{{background:var(--surface);border-radius:16px;padding:16px 22px;font-size:20px;font-family:var(--mono);margin-bottom:22px;box-shadow:var(--shadow)}}
@@ -145,7 +146,7 @@ h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing
 .btrack{{display:flex;align-items:center;gap:12px}} .bar{{height:14px;width:0;border-radius:0 4px 4px 0;transition:width 1.3s var(--ease)}}
 .blab{{font-family:var(--mono);font-size:12.5px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}} .blab b{{color:var(--ink);font-weight:600}} .brow.ours .blab,.brow.ours .blab b{{color:var(--blue)}}
 .kpis{{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:24px}} .kpi .v{{font-family:var(--mono);font-size:50px;font-weight:500;color:var(--blue);line-height:1;letter-spacing:-.03em}} .kpi .l{{font-size:14px;color:var(--ink2);margin-top:10px}}
-.dumb{{position:relative}} .drow{{display:grid;grid-template-columns:220px 1fr 230px;align-items:center;height:64px}} .dname{{font-size:16px;font-weight:600}} .dnote{{font-size:14px;color:var(--ink2);padding-left:22px}}
+.dumb{{position:relative}} .drow{{display:grid;grid-template-columns:220px 1fr 230px;align-items:center;height:56px}} .dname{{font-size:16px;font-weight:600}} .dnote{{font-size:14px;color:var(--ink2);padding-left:22px}}
 .dtrack{{position:relative;height:1px;background:var(--grid)}} .dseg{{position:absolute;top:-2px;height:5px;width:0;background:var(--blue);opacity:.3;border-radius:3px;transition:width 1.2s var(--ease) .2s}}
 .ddot{{position:absolute;top:-8px;width:17px;height:17px;margin-left:-8.5px;border-radius:50%;border:2px solid var(--surface)}} .ddot.b{{background:{GRAY}}} .ddot.a{{background:var(--blue);opacity:0;transition:opacity .4s ease 1.3s}}
 .ddot span{{position:absolute;top:-27px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:12px;white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}} .ddot.a span{{color:var(--blue);font-weight:650}}
@@ -156,12 +157,12 @@ h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing
 /* 5 */
 .finds{{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}} .finds .v{{font-family:var(--mono);font-size:52px;font-weight:500;color:var(--blue);line-height:1;margin-bottom:16px;letter-spacing:-.03em}} .finds .v.red{{color:var(--red)}}
 .finds h3{{font-size:19px;margin:0 0 8px;font-weight:650}} .finds p{{font-size:16px;color:var(--ink2);margin:0;font-family:var(--serif)}}
-.motto{{font-size:44px;font-weight:700;letter-spacing:-.02em;text-align:center;margin:56px 0 0;padding:48px 30px;border-radius:28px;background:#06080b;color:#e9ecea}} .motto .blue{{color:#39ff6a}}
-#dots{{position:fixed;right:26px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:12px;z-index:10;mix-blend-mode:difference}}
-#dots i{{width:7px;height:7px;border-radius:50%;background:#7c8a86;cursor:pointer;transition:all .3s var(--ease)}} #dots i.on{{background:#fff;height:26px;border-radius:4px}}
+.motto{{font-size:40px;font-weight:700;letter-spacing:-.02em;text-align:center;margin:30px 0 0;padding:30px;border-radius:28px;background:var(--surface);border:1px solid rgba(57,255,106,.25);color:#e9ecea;box-shadow:0 0 80px -30px rgba(57,255,106,.35)}} .motto .blue{{color:#39ff6a}}
+#dots{{position:fixed;right:26px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:12px;z-index:10}}
+#dots i{{width:7px;height:7px;border-radius:50%;background:#7c8a86;cursor:pointer;transition:all .3s var(--ease)}} #dots i.on{{background:#39ff6a;height:26px;border-radius:4px;box-shadow:0 0 10px rgba(57,255,106,.6)}}
 </style></head><body><div id="bar"></div><nav id="dots"></nav>
 
-<section class="sec dark">
+<section class="sec">
 <div class="team"><span class="pill">{TEAM}</span><b>{MEMBERS}</b></div>
 <div class="k">AccessFrontier · the problem</div>
 <p class="hook">An AI agent's answer can be correct<br>while the action it executed <span class="red">was unsafe.</span></p>
