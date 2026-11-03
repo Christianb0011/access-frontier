@@ -14,7 +14,8 @@ from build_demo import (BLUE, HERO_CASE, ROOT, final_message, fmt_args, guard_re
 OUT = ROOT / "demo"
 OUT.mkdir(exist_ok=True)
 TEAM, MEMBERS = "IAMpossible", "NandaKiran Velaga · Christian Bakhos"
-GRAY, RED = "#898781", "#d03b3b"
+GRAY, RED = "#8a9490", "#d03b3b"
+ACCENT, ACCENT_DARK = "#167a36", "#39ff6a"  # LatentLane palette: ink green (light), signal green (dark)
 
 
 def wilson(k, n, z=1.96):
@@ -64,7 +65,7 @@ def main():
     def bars(sp, title):
         rows = "".join(
             f'<div class="brow{" ours" if mine else ""}"><div class="bname">{n}<small>{r}</small></div>'
-            f'<div class="btrack"><div class="bar" style="--w:{max(1.2, 100 * fails(s, sp) / fmax):.1f}%;background:{BLUE if mine else GRAY}" '
+            f'<div class="btrack"><div class="bar" style="--w:{max(1.2, 100 * fails(s, sp) / fmax):.1f}%;background:{ACCENT if mine else GRAY}" '
             f'title="{n}: {fails(s, sp)} failed of {s[sp]["n"]} ({pct(s[sp]["raw"], s[sp]["n"])} pass)"></div>'
             f'<span class="blab"><b>{fails(s, sp)}</b> failed · {pct(s[sp]["raw"], s[sp]["n"])} pass</span></div></div>'
             for n, r, s, mine in systems)
@@ -90,68 +91,77 @@ def main():
     funnel = [(2229, "real IT-support tickets"), (1960, "in English"), (1148, "access / identity related"), (502, "unique ticket templates")]
 
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AccessFrontier · {TEAM}</title><style>
-:root{{--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--grid:#e1e0d9;--blue:{BLUE};--blue2:#eaf2fc;--red:{RED};--red2:#fdecec;--ok:#006300;--surface:#fcfcfb}}
-*{{box-sizing:border-box}} html{{scroll-behavior:smooth}} body{{margin:0;background:#f9f9f7;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}}
-#bar{{position:fixed;top:0;left:0;height:4px;width:0;background:var(--blue);z-index:10}}
-.sec{{position:relative;min-height:100vh;max-width:1500px;margin:0 auto;padding:70px 76px 80px;display:flex;flex-direction:column;justify-content:center;
-opacity:.15;transform:translateY(40px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.2,1)}} .sec.on{{opacity:1;transform:none}}
-.sec+.sec{{border-top:1px solid var(--grid)}}
-.k{{font-size:17px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}}
-h1{{font-size:62px;line-height:1.06;margin:10px 0 14px;letter-spacing:-.01em}} h2{{font-size:44px;line-height:1.1;margin:8px 0 26px;letter-spacing:-.01em}}
-.sub{{font-size:24px;color:var(--ink2)}} .red{{color:var(--red)}} .blue{{color:var(--blue)}}
-.frag{{opacity:0;transform:translateY(14px);transition:opacity .45s ease,transform .45s ease}} .frag.in{{opacity:1;transform:none}}
-.foot{{margin-top:34px;display:flex;justify-content:space-between;font-size:14px;color:var(--muted)}}
-.card{{background:var(--surface);border:1px solid rgba(11,11,11,.1);border-radius:16px;padding:22px 26px}}
-/* slide 1 */
-.team{{display:flex;gap:14px;align-items:center;font-size:20px;color:var(--ink2);margin-bottom:36px}} .team b{{color:var(--ink);font-size:22px}}
-.pill{{background:var(--ink);color:#fff;border-radius:999px;padding:6px 16px;font-weight:700;letter-spacing:.04em}}
-.hook{{font-size:56px;line-height:1.12;font-weight:700;margin:0 0 40px}}
-.three{{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:22px}} .three h3{{margin:0 0 8px;font-size:23px}} .three p{{margin:0;font-size:19px;color:var(--ink2)}}
-.meter{{height:22px;background:var(--grid);border-radius:6px;overflow:hidden;margin:14px 0 8px}} .meter i{{display:block;height:100%;width:0;background:var(--blue);border-radius:6px;transition:width 1.4s cubic-bezier(.2,.8,.2,1)}}
-.big{{font-size:64px;font-weight:700;color:var(--blue);line-height:1}}
-/* slide 2 */
-.flow{{display:grid;grid-template-columns:1.05fr 70px 1fr;align-items:center}} .arrow{{font-size:54px;color:var(--muted);text-align:center}}
-.fun div{{display:flex;align-items:center;gap:16px;margin:12px 0}} .fun em{{font-style:normal;font-weight:700;font-size:28px;min-width:96px;font-variant-numeric:tabular-nums}}
-.fun i{{display:block;height:36px;width:0;background:var(--blue);border-radius:0 8px 8px 0;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}} .fun span{{font-size:19px;color:var(--ink2)}}
-.splits{{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}} .split{{border-radius:12px;padding:14px 18px;background:#fff;border:1px solid rgba(11,11,11,.1)}}
-.split b{{display:block;font-size:40px;line-height:1}} .split span{{font-size:16px;color:var(--ink2)}} .split.lock{{border:2px solid var(--ink)}} .split.lock b::after{{content:" 🔒";font-size:24px}}
-.chips{{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:21px}} .chips span{{background:#fff;border:1.5px solid rgba(11,11,11,.14);border-radius:10px;padding:10px 15px}} .chips i{{font-style:normal;color:var(--muted)}}
-.chips .x{{border-color:var(--red);color:var(--red);font-weight:700;background:var(--red2)}} .chips .ok{{border-color:var(--ok);color:var(--ok)}}
-/* slide 3 */
-.case{{display:grid;grid-template-columns:1.15fr 1fr;gap:26px}} .ticket{{background:#fff;border:1px solid rgba(11,11,11,.1);border-left:6px solid var(--ink2);border-radius:10px;padding:12px 18px;font-size:22px;margin-bottom:16px}}
-.ticket small{{display:block;font-size:13px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}}
-.panel{{background:var(--surface);border:1px solid rgba(11,11,11,.1);border-radius:14px;padding:16px 20px}} .panel.bad{{border-top:7px solid var(--red)}} .panel.good{{border-top:7px solid var(--blue)}}
-.who{{font-weight:700;font-size:20px;margin-bottom:6px}} .who small{{font-weight:400;color:var(--muted);font-size:15px;margin-left:8px}}
-.step{{display:grid;grid-template-columns:28px 1fr;font-size:19px;padding:7px 12px;margin:6px 0;background:#fff;border-radius:8px}} .step b{{color:var(--ok)}} .step em{{grid-column:2;font-style:normal;font-size:15px;color:var(--ink2)}}
-.step.unsafe{{background:var(--red2);outline:3px solid var(--red)}} .step.unsafe b,.step.unsafe em{{color:var(--red);font-weight:700}}
-.step.unsafe.in{{animation:pulse 1s ease 2}} @keyframes pulse{{50%{{outline-width:7px;outline-color:#ff8a8a}}}}
-.step.blocked{{background:var(--blue2);outline:3px solid var(--blue)}} .step.blocked b,.step.blocked em{{color:var(--blue);font-weight:700}}
-.reply{{font-size:16px;color:var(--ink2);background:#fff;border-radius:8px;padding:8px 12px;margin-top:6px}} .reply b{{color:var(--ink)}}
-.verdict{{font-size:28px;font-weight:700;margin-top:10px}}
-/* slide 4 */
-.res{{display:grid;grid-template-columns:1fr 1fr;gap:28px}} .chart{{background:var(--surface);border:1px solid rgba(11,11,11,.1);border-radius:14px;padding:16px 20px}}
-.ctitle{{font-size:18px;font-weight:700;margin-bottom:8px}} .brow{{display:grid;grid-template-columns:190px 1fr;align-items:center;margin:9px 0}}
-.bname{{font-size:17px;color:var(--ink2)}} .bname small{{display:block;font-size:13px;color:var(--muted)}} .brow.ours .bname{{color:var(--ink);font-weight:700}}
-.btrack{{display:flex;align-items:center;gap:10px}} .bar{{height:24px;width:0;border-radius:0 6px 6px 0;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}}
-.blab{{font-size:16px;color:var(--ink2);white-space:nowrap;font-variant-numeric:tabular-nums}} .blab b{{color:var(--ink)}}
-.kpis{{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:20px}} .kpi .v{{font-size:50px;font-weight:700;color:var(--blue);line-height:1}} .kpi .l{{font-size:16px;color:var(--ink2);margin-top:6px}}
-.dumb{{position:relative}} .drow{{display:grid;grid-template-columns:230px 1fr 230px;align-items:center;height:52px}} .dname{{font-size:17px;font-weight:600}} .dnote{{font-size:16px;color:var(--ink2);padding-left:18px}}
-.dtrack{{position:relative;height:2px;background:var(--grid)}} .dseg{{position:absolute;top:-2px;height:6px;width:0;background:var(--blue);opacity:.35;border-radius:3px;transition:width 1.1s cubic-bezier(.2,.8,.2,1) .2s}}
-.ddot{{position:absolute;top:-8px;width:18px;height:18px;margin-left:-9px;border-radius:50%;border:2px solid #fff}} .ddot.b{{background:{GRAY}}} .ddot.a{{background:var(--blue);opacity:0;transition:opacity .3s ease 1.2s}}
-.ddot span{{position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-size:14px;white-space:nowrap;color:var(--ink2);font-variant-numeric:tabular-nums}} .ddot.a span{{color:var(--blue);font-weight:700}}
-.axis{{position:relative;height:20px;margin-left:230px;margin-right:230px}} .axis span{{position:absolute;transform:translateX(-50%);font-size:13px;color:var(--muted)}}
+<title>AccessFrontier · {TEAM}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:ital,wght@0,400;0,500;1,400&display=swap"><style>
+:root{{--bg:#f4f5f2;--ink:#1c1d1e;--ink2:#3c3e41;--muted:#6b736f;--grid:#e2e5e1;--blue:{ACCENT};--blue2:#e8f2ea;--red:{RED};--red2:#fbf0ef;--ok:#006300;--surface:#fff;
+--shadow:0 1px 2px rgba(28,29,30,.04),0 18px 40px -22px rgba(28,29,30,.16);--ease:cubic-bezier(.2,.8,.2,1);
+*{{box-sizing:border-box}} html{{scroll-behavior:smooth}}
+--sans:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;--serif:"Source Serif 4",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,Consolas,monospace}}
+body{{margin:0;background:var(--bg);font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:18px;line-height:1.5}}
+#bar{{position:fixed;top:0;left:0;height:3px;width:0;background:var(--blue);z-index:10}}
+.sec{{position:relative;min-height:100vh;max-width:1440px;margin:0 auto;padding:96px 96px 88px;display:flex;flex-direction:column;justify-content:center;
+opacity:.1;transform:translateY(36px);transition:opacity 1s ease,transform 1s var(--ease)}} .sec.on{{opacity:1;transform:none}}
+.sec.dark{{background:#06080b;box-shadow:0 0 0 100vmax #06080b;clip-path:inset(0 -100vmax);color:#e9ecea;--ink:#e9ecea;--ink2:#a9b0ac;--muted:#7c8a86;--grid:#1d2420;--blue:{ACCENT_DARK};--red:#ff6b5e;--surface:#0d1114}}
+.k{{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--blue)}} .k::before{{content:"";width:32px;height:2px;background:currentColor;border-radius:2px}}
+h1{{font-size:64px;line-height:1.04;margin:18px 0;font-weight:700;letter-spacing:-.025em}} h2{{font-size:46px;line-height:1.08;margin:16px 0 36px;font-weight:700;letter-spacing:-.022em;max-width:1100px}}
+.sub{{font-size:22px;color:var(--ink2);font-family:var(--serif)}} .red{{color:var(--red)}} .blue{{color:var(--blue)}}
+.frag{{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s var(--ease)}} .frag.in{{opacity:1;transform:none}}
+.foot{{margin-top:44px;display:flex;justify-content:space-between;gap:30px;font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.01em}}
+.card{{background:var(--surface);border:1px solid rgba(20,20,20,.05);border-radius:22px;padding:28px 30px;box-shadow:var(--shadow)}}
+.dark .card{{border-color:rgba(255,255,255,.07);box-shadow:none}}
+/* 1 */
+.team{{display:flex;gap:16px;align-items:center;font-size:17px;color:var(--ink2);margin-bottom:56px}} .team b{{color:var(--ink);font-weight:500}}
+.pill{{font-family:var(--mono);border:1px solid rgba(57,255,106,.45);color:#39ff6a;border-radius:999px;padding:7px 18px;font-weight:600;letter-spacing:.06em;font-size:15px}}
+.hook{{font-size:66px;line-height:1.06;font-weight:700;letter-spacing:-.03em;margin:22px 0 64px;max-width:1240px}}
+.three{{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:24px}} .three h3{{margin:0 0 10px;font-size:20px;font-weight:600}} .three p{{margin:0;font-size:17px;color:var(--ink2);font-family:var(--serif)}}
+.meter{{height:8px;background:var(--grid);border-radius:4px;overflow:hidden;margin:18px 0 14px}} .meter i{{display:block;height:100%;width:0;background:var(--blue);border-radius:4px;transition:width 1.6s var(--ease)}}
+.big{{font-family:var(--mono);font-size:68px;font-weight:500;color:var(--blue);line-height:1;letter-spacing:-.03em}}
+/* 2 */
+.flow{{display:grid;grid-template-columns:1.15fr 80px 1fr;align-items:center}} .arrow{{font-size:40px;color:var(--muted);text-align:center;font-weight:300}}
+.fun div{{display:flex;align-items:center;gap:18px;margin:16px 0}} .fun em{{font-family:var(--mono);font-style:normal;font-weight:500;font-size:28px;min-width:100px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}}
+.fun i{{display:block;height:14px;width:0;background:var(--blue);border-radius:0 4px 4px 0;transition:width 1.3s var(--ease)}} .fun span{{font-size:16px;color:var(--ink2)}}
+.splits{{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}} .split{{border-radius:18px;padding:18px 22px;background:var(--surface);box-shadow:var(--shadow)}}
+.split b{{display:block;font-family:var(--mono);font-size:40px;line-height:1;font-weight:500;letter-spacing:-.03em}} .split span{{font-size:14px;color:var(--ink2)}}
+.split.lock{{background:#06080b;color:#e9ecea;box-shadow:none}} .split.lock span{{color:#a9b0ac}} .split.lock b::after{{content:"  locked";font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#39ff6a;font-family:var(--mono);vertical-align:middle}}
+.chips{{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:17px}} .chips span{{background:var(--surface);border:1px solid var(--grid);border-radius:999px;padding:9px 18px}} .chips i{{font-style:normal;color:var(--muted)}}
+.chips.sm{{gap:6px}} .chips.sm span{{padding:6px 12px;font-size:14px}} .chips .x{{border-color:transparent;color:var(--red);font-weight:600;background:var(--red2)}} .chips .ok{{border-color:transparent;background:#e9ece8;color:var(--ink2)}}
+/* 3 */
+.case{{display:grid;grid-template-columns:1.15fr 1fr;gap:28px}}
+.ticket{{background:var(--surface);border-radius:16px;padding:16px 22px;font-size:20px;font-family:var(--mono);margin-bottom:22px;box-shadow:var(--shadow)}}
+.ticket small{{display:block;font-size:12px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:2px}}
+.panel{{background:var(--surface);border-radius:22px;padding:22px 24px;box-shadow:var(--shadow);position:relative;overflow:hidden}}
+.panel::before{{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}} .panel.bad::before{{background:var(--red)}} .panel.good::before{{background:var(--blue)}}
+.who{{font-weight:650;font-size:19px;margin-bottom:10px}} .who small{{font-weight:400;color:var(--muted);font-size:14px;margin-left:10px}}
+.step{{display:grid;grid-template-columns:26px 1fr;font-size:17px;padding:9px 14px;margin:6px 0;background:var(--bg);border-radius:12px}} .step b{{color:var(--muted);font-weight:600}} .step em{{grid-column:2;font-style:normal;font-family:var(--mono);font-size:12.5px;color:var(--muted)}}
+.step.unsafe{{background:var(--red2);box-shadow:inset 0 0 0 1.5px var(--red)}} .step.unsafe b,.step.unsafe em{{color:var(--red);font-weight:600}}
+.step.unsafe.in{{animation:pulse 1.4s ease 2}} @keyframes pulse{{50%{{box-shadow:inset 0 0 0 1.5px var(--red),0 0 0 8px rgba(208,59,59,.12)}}}}
+.step.blocked{{background:var(--blue2);box-shadow:inset 0 0 0 1.5px var(--blue)}} .step.blocked b,.step.blocked em{{color:var(--blue);font-weight:600}}
+.reply{{font-size:15px;font-family:var(--serif);color:var(--ink2);padding:10px 14px 2px;margin-top:4px}} .reply b{{color:var(--ink);font-weight:500;font-style:italic}}
+.verdict{{font-size:24px;font-weight:650;margin-top:12px;letter-spacing:-.01em}}
+/* 4 */
+.res{{display:grid;grid-template-columns:1fr 1fr;gap:24px}} .chart{{background:var(--surface);border-radius:22px;padding:24px 28px;box-shadow:var(--shadow)}}
+.ctitle{{font-size:15px;font-weight:600;margin-bottom:12px;color:var(--ink2)}} .brow{{display:grid;grid-template-columns:180px 1fr;align-items:center;margin:12px 0}}
+.bname{{font-size:16px;color:var(--ink2)}} .bname small{{display:block;font-size:12px;color:var(--muted)}} .brow.ours .bname{{color:var(--ink);font-weight:650}}
+.btrack{{display:flex;align-items:center;gap:12px}} .bar{{height:14px;width:0;border-radius:0 4px 4px 0;transition:width 1.3s var(--ease)}}
+.blab{{font-family:var(--mono);font-size:12.5px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}} .blab b{{color:var(--ink);font-weight:600}} .brow.ours .blab,.brow.ours .blab b{{color:var(--blue)}}
+.kpis{{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:24px}} .kpi .v{{font-family:var(--mono);font-size:50px;font-weight:500;color:var(--blue);line-height:1;letter-spacing:-.03em}} .kpi .l{{font-size:14px;color:var(--ink2);margin-top:10px}}
+.dumb{{position:relative}} .drow{{display:grid;grid-template-columns:220px 1fr 230px;align-items:center;height:64px}} .dname{{font-size:16px;font-weight:600}} .dnote{{font-size:14px;color:var(--ink2);padding-left:22px}}
+.dtrack{{position:relative;height:1px;background:var(--grid)}} .dseg{{position:absolute;top:-2px;height:5px;width:0;background:var(--blue);opacity:.3;border-radius:3px;transition:width 1.2s var(--ease) .2s}}
+.ddot{{position:absolute;top:-8px;width:17px;height:17px;margin-left:-8.5px;border-radius:50%;border:2px solid var(--surface)}} .ddot.b{{background:{GRAY}}} .ddot.a{{background:var(--blue);opacity:0;transition:opacity .4s ease 1.3s}}
+.ddot span{{position:absolute;top:-27px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:12px;white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}} .ddot.a span{{color:var(--blue);font-weight:650}}
+.axis{{position:relative;height:20px;margin-left:220px;margin-right:230px}} .axis span{{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:var(--muted)}}
 .on .meter i{{width:var(--w)}} .on .fun i{{width:var(--w)}} .on .bar{{width:var(--w)}} .on .dseg{{width:var(--w)}} .on .ddot.a{{opacity:1}}
 .on .frag:not(.in) .bar,.on .frag:not(.in) .dseg{{width:0}} .on .frag:not(.in) .ddot.a{{opacity:0}}
-.fine{{font-size:13px;color:var(--muted);margin-top:10px}}
-/* slide 5 */
-.finds{{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}} .finds .v{{font-size:54px;font-weight:700;color:var(--blue);line-height:1;margin-bottom:12px}} .finds .v.red{{color:var(--red)}}
-.finds h3{{font-size:22px;margin:0 0 8px}} .finds p{{font-size:17px;color:var(--ink2);margin:0}}
-.motto{{font-size:40px;font-weight:700;text-align:center;margin:42px 0 18px}} .closing{{display:flex;justify-content:space-between;align-items:end;font-size:19px;color:var(--ink2)}}
-#dots{{position:fixed;right:22px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:10}} #dots i{{width:10px;height:10px;border-radius:50%;background:var(--grid);cursor:pointer}} #dots i.on{{background:var(--blue);height:28px;border-radius:5px}}
+.fine{{font-size:12.5px;color:var(--muted);margin-top:14px;max-width:1100px}}
+/* 5 */
+.finds{{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}} .finds .v{{font-family:var(--mono);font-size:52px;font-weight:500;color:var(--blue);line-height:1;margin-bottom:16px;letter-spacing:-.03em}} .finds .v.red{{color:var(--red)}}
+.finds h3{{font-size:19px;margin:0 0 8px;font-weight:650}} .finds p{{font-size:16px;color:var(--ink2);margin:0;font-family:var(--serif)}}
+.motto{{font-size:44px;font-weight:700;letter-spacing:-.02em;text-align:center;margin:56px 0 0;padding:48px 30px;border-radius:28px;background:#06080b;color:#e9ecea}} .motto .blue{{color:#39ff6a}}
+#dots{{position:fixed;right:26px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:12px;z-index:10;mix-blend-mode:difference}}
+#dots i{{width:7px;height:7px;border-radius:50%;background:#7c8a86;cursor:pointer;transition:all .3s var(--ease)}} #dots i.on{{background:#fff;height:26px;border-radius:4px}}
 </style></head><body><div id="bar"></div><nav id="dots"></nav>
 
-<section class="sec">
+<section class="sec dark">
 <div class="team"><span class="pill">{TEAM}</span><b>{MEMBERS}</b></div>
 <div class="k">AccessFrontier · the problem</div>
 <p class="hook">An AI agent's answer can be correct<br>while the action it executed <span class="red">was unsafe.</span></p>
@@ -187,7 +197,7 @@ h1{{font-size:62px;line-height:1.06;margin:10px 0 14px;letter-spacing:-.01em}} h
 <div class="panel bad"><div class="who">GLM-5.3<small>frontier model</small></div>
 {"".join(step(*s) for s in g_steps)}
 <div class="reply frag">Replied: <b>“{html.escape(final_message(glm_rec)[:110])}…”</b></div>
-<div class="frag" style="margin-top:12px"><div class="chips" style="font-size:16px"><span class="ok">state ✓</span><span class="ok">decision ✓</span><span class="ok">evidence ✓</span><span class="x">unauthorized write ✗</span><i>=</i><span class="x">FAIL</span></div></div>
+<div class="frag" style="margin-top:12px"><div class="chips sm"><span class="ok">state ✓</span><span class="ok">decision ✓</span><span class="ok">evidence ✓</span><span class="x">unauthorized write ✗</span><i>=</i><span class="x">FAIL</span></div></div>
 </div>
 <div><div class="panel good frag"><div class="who">AccessFrontier<small>GLM-5.3 Flash + execution guard</small></div>
 {"".join(step(*s, frag=False) for s in o_steps)}
@@ -217,7 +227,7 @@ h1{{font-size:62px;line-height:1.06;margin:10px 0 14px;letter-spacing:-.01em}} h
 <div class="card dumb" style="padding:34px 30px 14px">
 <div class="axis">{ticks}</div>
 {dumbbells}
-<div class="fine" style="margin-left:230px">Strict success, guard off (gray) → on (blue). The guard completes missing lookups, enforces the output contract, and deterministically blocks policy-violating writes. It needs no training and no changes to the model.</div>
+<div class="fine" style="margin-left:230px">Strict success, guard off (gray) → on (green). The guard completes missing lookups, enforces the output contract, and deterministically blocks policy-violating writes. It needs no training and no changes to the model.</div>
 </div>
 <div class="finds frag" style="margin-top:26px">
 <div class="card"><div class="v">~{ratio:.0f}×</div><h3>Frontier quality, open-model price</h3><p>GLM-5.3 Flash + guard beats both frontier models on the strict metric, at ${ours["test"]["cost"]:.4f} per ticket, with a {ours["test"]["p50"]}s median vs {glm["test"]["p50"]}s.</p></div>
@@ -246,6 +256,12 @@ dots.children[0].classList.add('on');
 if(location.protocol.startsWith('http')){{let lm=null;const y=sessionStorage.getItem('wy');if(y){{scrollTo(0,+y);sessionStorage.removeItem('wy')}}
 setInterval(()=>fetch(location.pathname,{{method:'HEAD',cache:'no-store'}}).then(r=>{{const m=r.headers.get('Last-Modified');if(lm&&m!==lm){{sessionStorage.setItem('wy',scrollY);location.reload()}}lm=m}}).catch(()=>{{}}),1000)}}
 </script></body></html>"""
+    import re  # counters show their final value even before (or without) the count-up animation
+    def _fill(m):
+        v, dec, sep = float(m.group(2)), int(m.group(4) or 0), m.group(5)
+        return m.group(1) + (f"{v:,.0f}" if sep else f"{v:.{dec}f}") + "<"
+    page = re.sub(r'(<(?:span|em) data-count="([\d.]+)"( data-dec="(\d)")?( data-sep="1")?>)0<', _fill, page)
+    page = page.replace("GLM-5.3", "GLM‑5.3")  # non-breaking hyphen: never split the model name
     (OUT / "walkthrough.html").write_text(page, encoding="utf-8")
     print(f"wrote demo/walkthrough.html ({len(page) // 1024} KB) | AccessFrontier = {ours_id} | top on strict: {top} | GLM gap significant: {sig_glm} "
           f"| failures {f_ours} vs GLM {f_glm} ({100 * (1 - f_ours / f_glm):.0f}% fewer) | cost ratio {ratio:.2f}")
