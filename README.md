@@ -21,7 +21,7 @@ Clone the repo and double-click `demo/walkthrough.html`, or run `python -m http.
 
 ## Who built what
 
-Built in a hackathon by a team of two. From the [commit history](../../commits/main):
+Built in a hackathon by a team of two. From the [commit history](https://github.com/Christianb0011/access-frontier/commits/main):
 
 - **Christian Bakhos** (47 of 49 commits): the benchmark design and frozen test sets, the data pipeline from real tickets to simulator-verified cases, the deterministic IAM simulator and policies, the evaluation contract v2.0 and its audit, the agentic layer and execution guard ([src/guarded_agent.py](src/guarded_agent.py)), the LoRA fine-tune, the pre-commit integrity checks, and the walkthrough and demo.
 - **NandaKiran Velaga**: the independent Inspect evaluation harness ([nanda-eval/](nanda-eval/)), the Kimi K3 runs and the initial benchmark data audit.
