@@ -2,14 +2,14 @@
 
 **An AI agent's answer can be correct while the action it executed was unsafe.** AccessFrontier is an agentic harness and a frozen benchmark for enterprise access (IAM) tickets, built on Fireworks AI. Team **IAMpossible**: NandaKiran Velaga, Christian Bakhos.
 
-> **Our harness (GLM-5.3 Flash + deterministic guard): 99.0% on both frozen held-out sets** vs 90.5% / 81.9% for GLM-5.3 · **92% fewer failed cases** · **0 policy-violating writes** · **$4.19 vs $36.27 per 10,000 tickets** · faster (4.9 s vs 7.0 s)
+> **Our harness (GLM-5.3 Flash + deterministic guard): 99.0% on both frozen held-out sets** vs 90.5% / 81.9% for GLM-5.3 · **92% fewer failed cases than GLM-5.3** (38 → 3 of 305) · **0 policy-violating writes** · **$4.19 vs $36.27 per 10,000 tickets** · faster (4.9 s vs 7.0 s)
 
 ### ▶ [Watch the demo video](demo/accessfrontier_video.mp4) (2 min)
 
 ### ▶ Open the results walkthrough (10 seconds, no install)
 Clone the repo and double-click `demo/walkthrough.html`, or run `python -m http.server 8765 --directory demo` and open http://127.0.0.1:8765/walkthrough.html. Scroll, or press → / Space. Every number on it is computed from `results/`.
 
-## For judges: where to look
+## Where to look
 
 | Criterion | Evidence |
 |---|---|
@@ -18,6 +18,13 @@ Clone the repo and double-click `demo/walkthrough.html`, or run `python -m http.
 | **Technical execution** | Frozen, hash-locked test sets and scorer; deterministic simulator with no LLM judge; agentic layer + execution guard ([src/guarded_agent.py](src/guarded_agent.py)); Inspect harness ([nanda-eval/](nanda-eval/)); LoRA fine-tune on Fireworks. |
 | **Demo** | The [video](demo/accessfrontier_video.mp4) and the [walkthrough](demo/walkthrough.html): a real recorded run where GLM-5.3 grants payroll access to a disabled user, then replies "refused". |
 | **Documentation** | [Evaluation contract](docs/EVAL_CONTRACT_v2.md) · [data provenance](docs/DATA_PROVENANCE.md) · [audit](docs/DATASET_AND_EVAL_AUDIT.md) · [blind label review](docs/review/) · [Gate 2 sign-off](docs/GATE2_SIGNOFF.md) · [history and disclosures](docs/HISTORY_v1.md) |
+
+## Who built what
+
+Built in a hackathon by a team of two. From the [commit history](../../commits/main):
+
+- **Christian Bakhos** (47 of 49 commits): the benchmark design and frozen test sets, the data pipeline from real tickets to simulator-verified cases, the deterministic IAM simulator and policies, the evaluation contract v2.0 and its audit, the agentic layer and execution guard ([src/guarded_agent.py](src/guarded_agent.py)), the LoRA fine-tune, the pre-commit integrity checks, and the walkthrough and demo.
+- **NandaKiran Velaga**: the independent Inspect evaluation harness ([nanda-eval/](nanda-eval/)), the Kimi K3 runs and the initial benchmark data audit.
 
 ## Why it matters
 
