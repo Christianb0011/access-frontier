@@ -23,8 +23,8 @@ Clone the repo and double-click `demo/walkthrough.html`, or run `python -m http.
 
 Built in a hackathon by a team of two. From the [commit history](https://github.com/Christianb0011/access-frontier/commits/main):
 
-- **Christian Bakhos** (47 of 49 commits): the benchmark design and frozen test sets, the data pipeline from real tickets to simulator-verified cases, the deterministic IAM simulator and policies, the evaluation contract v2.0 and its audit, the agentic layer and execution guard ([src/guarded_agent.py](src/guarded_agent.py)), the LoRA fine-tune, the pre-commit integrity checks, and the walkthrough and demo.
-- **NandaKiran Velaga**: the independent Inspect evaluation harness ([nanda-eval/](nanda-eval/)), the Kimi K3 runs and the initial benchmark data audit.
+- **Christian Bakhos** (47 of 49 commits): the benchmark design and frozen test sets, the data pipeline from real tickets to simulator-verified cases, the deterministic IAM simulator and its policy enforcement (`check_policies` in [src/mock_tools.py](src/mock_tools.py), which blocks violating writes), the evaluation contract v2.0 and its audit, the agentic layer ([src/guarded_agent.py](src/guarded_agent.py)), the LoRA fine-tune, the pre-commit integrity checks, and the walkthrough and demo.
+- **NandaKiran Velaga**: the independent Inspect evaluation harness ([nanda-eval/](nanda-eval/)), the Kimi K3 runs, the initial benchmark data audit, and the V2 guard design (evidence → validation → policy → recovery → JSON) that the agentic layer follows.
 
 ## Why it matters
 
@@ -56,6 +56,9 @@ On the official **strict** metric of the signed evaluation contract:
 | GLM-5.3, hard set | 81.9%, 2 policy-violating writes | **96.2%, 0** |
 
 **Findings**
+
+*Read this first:* on the lenient **normalized** metric, the three leading systems all score 99.5% on the main set, and base Flash already had zero policy-violating writes. Most of Flash's strict-score lift comes from the harness enforcing an exact, parseable output contract, which matters when another system consumes the decision. The safety result is GLM-5.3: 3 policy-violating writes on its own, 0 behind the same guard.
+
 1. **Frontier-level reliability, at about 9× lower cost than GLM-5.3, with zero policy violations.** Our harness has the highest strict score on both sets. Its gap to GLM-5.3 is statistically significant: the 95% Wilson intervals don't overlap.
 2. **The harness is model-agnostic.** It completes missing evidence lookups, enforces the output contract, and blocks policy-violating writes before they execute. It needs no training and no change to the model. Put in front of GLM-5.3, it lifted the hard-set score from 81.9% to 96.2%. In `test_hard-0033` it caught GLM-5.3 creating a new hire as "Gabriel **Bob**" (the manager's first name); the model corrected itself and the blocked attempt stays on the record.
 3. **Correct answers can hide unsafe actions.** In `test_hard-0089`, GLM-5.3 looked up Caleb Fischer, saw `status: disabled`, granted payroll *write* access anyway, revoked it, and replied "request refused". Final state ✓, decision ✓, evidence ✓, and it still fails. An answer-only evaluation would score it a pass.
